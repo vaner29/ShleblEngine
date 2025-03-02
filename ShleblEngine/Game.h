@@ -11,8 +11,10 @@
 #include <vector>
 #include <cmath>
 
+
 #include "GameComponent.h"
 #include "DisplayWin32.h"
+#include "InputDevice.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -26,10 +28,13 @@ private:
 	void CreateBackBuffer();
 
 protected:
+	virtual void SetBackgroundColor();
 	virtual void DestroyResources();
 	virtual void Draw();
 	virtual void Initialize();
+	virtual void Update();
 public:
+	static LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam);
 	ID3D11VertexShader* vertex_shader_;
 	ID3DBlob* vertex_shader_byte_code_;
 	ID3D11PixelShader* pixel_shader_;
@@ -51,7 +56,7 @@ public:
 	float delta_time_;
 	std::vector<GameComponent*> components_;
 	DisplayWin32* display_;
-	//InputDevice* input_dev_;
+	InputDevice* input_dev_;
 	unsigned int frame_count_;
 	Game(LPCWSTR name, int screen_width, int screen_height);
 	virtual ~Game();
