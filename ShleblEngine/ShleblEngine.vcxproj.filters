@@ -18,37 +18,52 @@
     <ClCompile Include="MySuper3DApp.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Game.cpp">
+    <ClCompile Include="Components\Game.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="GameComponent.cpp">
+    <ClCompile Include="Components\GameComponent.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="BaseComponent.cpp">
+    <ClCompile Include="Components\BaseComponent.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="DisplayWin32.cpp">
+    <ClCompile Include="Components\DisplayWin32.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="InputDevice.cpp">
+    <ClCompile Include="Components\InputDevice.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="SimpleMath.cpp">
+    <ClCompile Include="Dependencies\SimpleMath.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="Dependencies\pch.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Delegates.cpp">
+    <ClCompile Include="Dependencies\Delegates.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="PongGame.cpp">
+    <ClCompile Include="Components\PongGame.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="RectangleComponent.cpp">
+    <ClCompile Include="Components\RectangleComponent.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="PongBall.cpp">
+    <ClCompile Include="Components\PongBall.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Components\SphereComponent.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Components\SpaceGame.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Components\Camera.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Components\GridComponent.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Components\CameraController.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
@@ -57,49 +72,64 @@
     <FxCompile Include="Shaders\RectangleShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Game.h">
+    <ClInclude Include="Components\Game.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="GameComponent.h">
+    <ClInclude Include="Components\GameComponent.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="BaseComponent.h">
+    <ClInclude Include="Components\BaseComponent.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="DisplayWin32.h">
+    <ClInclude Include="Components\DisplayWin32.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="InputDevice.h">
+    <ClInclude Include="Components\InputDevice.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Keys.h">
+    <ClInclude Include="Components\Keys.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="SimpleMath.h">
+    <ClInclude Include="Dependencies\SimpleMath.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="pch.h">
+    <ClInclude Include="Dependencies\pch.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Delegates.h">
+    <ClInclude Include="Dependencies\Delegates.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="PongGame.h">
+    <ClInclude Include="Components\PongGame.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="RectangleComponent.h">
+    <ClInclude Include="Components\RectangleComponent.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="PongBall.h">
+    <ClInclude Include="Components\PongBall.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\SphereComponent.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\SpaceGame.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\Camera.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\GridComponent.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\CameraController.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="SimpleMath.inl">
+    <None Include="Dependencies\SimpleMath.inl">
       <Filter>Файлы заголовков</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="Delegates.natvis" />
+    <Natvis Include="Dependencies\Delegates.natvis" />
   </ItemGroup>
 </Project>

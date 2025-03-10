@@ -1,9 +1,9 @@
 #pragma once
 
 #include <unordered_set>
-#include "Delegates.h"
+#include "../Dependencies/Delegates.h"
 #include "Keys.h"
-#include "SimpleMath.h"
+#include "../Dependencies/SimpleMath.h"
 
 class Game;
 

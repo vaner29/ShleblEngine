@@ -45,5 +45,6 @@ public:
 	std::vector<DirectX::XMFLOAT4> GeneratePoints(float radius, float density);
 	void MakeNewBall(DirectX::XMFLOAT2 position, DirectX::SimpleMath::Vector2 direction);
 	std::vector<int> GenerateIndices(float density);
+	std::vector<int> ballsToDelete = {};
 
 };

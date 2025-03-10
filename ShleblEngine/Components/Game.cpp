@@ -99,6 +99,9 @@ Game::Game(LPCWSTR name, int screen_width, int screen_height) : name_(name), fra
 	display_ = new DisplayWin32(name, instance_, screen_width, screen_height, this);
 	input_dev_ = new InputDevice(this);
 
+	Camera = new ::Camera();
+	Camera->AspectRatio = static_cast<float>(screen_width) / static_cast<float>(screen_height);
+
 	D3D_FEATURE_LEVEL featureLevel[] = { D3D_FEATURE_LEVEL_11_1 };
 
 	DXGI_SWAP_CHAIN_DESC swapDesc = {};
@@ -148,7 +151,7 @@ Game::Game(LPCWSTR name, int screen_width, int screen_height) : name_(name), fra
 	context_->RSSetState(rast_state_);
 
 	ID3DBlob* errorVertexCode = nullptr;
-	auto resShader = D3DCompileFromFile(L"./Shaders/RectangleShader.hlsl",
+	auto resShader = D3DCompileFromFile(L"./Shaders/Base3dShader.hlsl",
 		nullptr /*macros*/,
 		nullptr /*include*/,
 		"VSMain",
@@ -168,17 +171,17 @@ Game::Game(LPCWSTR name, int screen_width, int screen_height) : name_(name), fra
 		// If there was  nothing in the error message then it simply could not find the shader file itself.
 		else
 		{
-			MessageBox(display_->hwnd_, L"MyVeryFirstShader.hlsl", L"Missing Shader File", MB_OK);
+			MessageBox(display_->hwnd_, L"Base3dShader.hlsl", L"Missing Shader File", MB_OK);
 		}
 
 		return;
 	}
 
-	D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr };
+	//D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr };
 
 	ID3DBlob* errorPixelCode;
-	resShader = D3DCompileFromFile(L"./Shaders/MyVeryFirstShader.hlsl",
-		Shader_Macros /*macros*/,
+	resShader = D3DCompileFromFile(L"./Shaders/Base3dShader.hlsl",
+		nullptr /*macros*/,
 		nullptr /*include*/,
 		"PSMain",
 		"ps_5_0",
@@ -196,6 +199,24 @@ Game::Game(LPCWSTR name, int screen_width, int screen_height) : name_(name), fra
 		pixel_shader_byte_code_->GetBufferPointer(),
 		pixel_shader_byte_code_->GetBufferSize(),
 		nullptr, &pixel_shader_);
+
+	D3D11_TEXTURE2D_DESC depthStencilDesc;
+
+	depthStencilDesc.Width = display_->client_width_;
+	depthStencilDesc.Height = display_->client_height_;
+	depthStencilDesc.MipLevels = 1;
+	depthStencilDesc.ArraySize = 1;
+	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthStencilDesc.CPUAccessFlags = 0;
+	depthStencilDesc.MiscFlags = 0;
+
+	HRESULT res2 = device_->CreateTexture2D(&depthStencilDesc, nullptr, &depth_stencil_buffer_);
+
+	res2 = device_->CreateDepthStencilView(depth_stencil_buffer_, nullptr, &depth_stencil_view_);
 }
 
 Game::~Game()
@@ -206,14 +227,6 @@ Game::~Game()
 	}
 	delete display_;
 	delete input_dev_;
-	context_->Release();
-	back_buffer_->Release();
-	render_view_->Release();
-	swap_chain_->Release();
-	pixel_shader_->Release();
-	pixel_shader_byte_code_->Release();
-	vertex_shader_->Release();
-	vertex_shader_byte_code_->Release();
 }
 
 void Game::Exit()
@@ -267,16 +280,7 @@ void Game::Run()
 
 		Update();
 
-		context_->ClearState();
-
-		context_->RSSetState(rast_state_);
-
-		context_->OMSetRenderTargets(1, &render_view_, nullptr);
-
-		context_->VSSetShader(vertex_shader_, nullptr, 0);
-		context_->PSSetShader(pixel_shader_, nullptr, 0);
-
-		SetBackgroundColor();
+		PrepareFrame();
 
 		Draw();
 
@@ -285,6 +289,22 @@ void Game::Run()
 		swap_chain_->Present(1, /*DXGI_PRESENT_DO_NOT_WAIT*/ 0);
 	}
 	Exit();
+}
+
+void Game::PrepareFrame()
+{
+
+	context_->ClearState();
+
+	context_->RSSetState(rast_state_);
+
+	context_->OMSetRenderTargets(1, &render_view_, depth_stencil_view_);
+
+	context_->VSSetShader(vertex_shader_, nullptr, 0);
+	context_->PSSetShader(pixel_shader_, nullptr, 0);
+
+	SetBackgroundColor();
+	context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 void Game::SetBackgroundColor()
@@ -298,6 +318,12 @@ void Game::SetBackgroundColor()
 
 void Game::DestroyResources()
 {
+	context_->Release();
+	back_buffer_->Release();
+	render_view_->Release();
+	swap_chain_->Release();
+	depth_stencil_view_->Release();
+	depth_stencil_buffer_->Release();
 	for (auto c : components_)
 	{
 		c->DestroyResources();
@@ -323,6 +349,7 @@ void Game::Initialize()
 
 void Game::Update()
 {
+	Camera->UpdateMatrix();
 	for (auto c : components_)
 	{
 		c->Update();

@@ -79,6 +79,12 @@ void PongGame::Update()
 		for (int i = size_before; i < components_.size(); ++i)
 			components_[i]->Update();
 	hits_ = {};
+
+	for (auto d : ballsToDelete) {
+		balls_.erase(std::next(balls_.begin(), d));
+		components_.erase(std::next(components_.begin(), d+2));
+	}
+	ballsToDelete = {};
 	//Game::Update();
 }
 

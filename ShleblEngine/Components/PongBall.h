@@ -1,6 +1,6 @@
 #pragma once
 #include "RectangleComponent.h"
-#include "SimpleMath.h"
+#include "../Dependencies/SimpleMath.h"
 class PongGame;
 
 class PongBall:

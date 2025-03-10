@@ -127,18 +127,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Delegates.cpp" />
-    <ClCompile Include="DisplayWin32.cpp" />
-    <ClCompile Include="Game.cpp" />
-    <ClCompile Include="GameComponent.cpp" />
-    <ClCompile Include="InputDevice.cpp" />
+    <ClCompile Include="Components\CameraController.cpp" />
+    <ClCompile Include="Components\Camera.cpp" />
+    <ClCompile Include="Dependencies\Delegates.cpp" />
+    <ClCompile Include="Components\DisplayWin32.cpp" />
+    <ClCompile Include="Components\Game.cpp" />
+    <ClCompile Include="Components\GameComponent.cpp" />
+    <ClCompile Include="Components\InputDevice.cpp" />
+    <ClCompile Include="Components\GridComponent.cpp" />
     <ClCompile Include="MySuper3DApp.cpp" />
-    <ClCompile Include="pch.cpp" />
-    <ClCompile Include="PongBall.cpp" />
-    <ClCompile Include="PongGame.cpp" />
-    <ClCompile Include="RectangleComponent.cpp" />
-    <ClCompile Include="SimpleMath.cpp" />
-    <ClCompile Include="BaseComponent.cpp" />
+    <ClCompile Include="Dependencies\pch.cpp" />
+    <ClCompile Include="Components\PongBall.cpp" />
+    <ClCompile Include="Components\PongGame.cpp" />
+    <ClCompile Include="Components\RectangleComponent.cpp" />
+    <ClCompile Include="Dependencies\SimpleMath.cpp" />
+    <ClCompile Include="Components\BaseComponent.cpp" />
+    <ClCompile Include="Components\SphereComponent.cpp" />
+    <ClCompile Include="Components\SpaceGame.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\RectangleShader.hlsl">
@@ -151,24 +156,29 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Delegates.h" />
-    <ClInclude Include="DisplayWin32.h" />
-    <ClInclude Include="Game.h" />
-    <ClInclude Include="GameComponent.h" />
-    <ClInclude Include="InputDevice.h" />
-    <ClInclude Include="Keys.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="PongBall.h" />
-    <ClInclude Include="PongGame.h" />
-    <ClInclude Include="RectangleComponent.h" />
-    <ClInclude Include="SimpleMath.h" />
-    <ClInclude Include="BaseComponent.h" />
+    <ClInclude Include="Components\CameraController.h" />
+    <ClInclude Include="Components\Camera.h" />
+    <ClInclude Include="Dependencies\Delegates.h" />
+    <ClInclude Include="Components\DisplayWin32.h" />
+    <ClInclude Include="Components\Game.h" />
+    <ClInclude Include="Components\GameComponent.h" />
+    <ClInclude Include="Components\InputDevice.h" />
+    <ClInclude Include="Components\Keys.h" />
+    <ClInclude Include="Dependencies\pch.h" />
+    <ClInclude Include="Components\PongBall.h" />
+    <ClInclude Include="Components\PongGame.h" />
+    <ClInclude Include="Components\RectangleComponent.h" />
+    <ClInclude Include="Dependencies\SimpleMath.h" />
+    <ClInclude Include="Components\BaseComponent.h" />
+    <ClInclude Include="Components\SphereComponent.h" />
+    <ClInclude Include="Components\SpaceGame.h" />
+    <ClInclude Include="Components\GridComponent.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="SimpleMath.inl" />
+    <None Include="Dependencies\SimpleMath.inl" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="Delegates.natvis" />
+    <Natvis Include="Dependencies\Delegates.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

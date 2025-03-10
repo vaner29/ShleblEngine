@@ -15,6 +15,7 @@
 #include "GameComponent.h"
 #include "DisplayWin32.h"
 #include "InputDevice.h"
+#include "Camera.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -33,7 +34,11 @@ protected:
 	virtual void Draw();
 	virtual void Initialize();
 	virtual void Update();
+	virtual void PrepareFrame();
 public:
+	ID3D11Texture2D* depth_stencil_buffer_;
+	ID3D11DepthStencilView* depth_stencil_view_;
+	Camera* Camera;
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam);
 	ID3D11VertexShader* vertex_shader_;
 	ID3DBlob* vertex_shader_byte_code_;
@@ -63,6 +68,7 @@ public:
 	void Exit();
 	void MessageHandler();
 	void Run();
+
 
 
 	// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
