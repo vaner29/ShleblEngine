@@ -15,7 +15,6 @@ public:
         DirectX::SimpleMath::Vector4 col;
     };
 protected:
-    //ID3DBlob* vertexShaderByteCode;
     ID3D11Buffer* constBuffer;
     std::vector<Point> points;
     std::vector<int> indices;

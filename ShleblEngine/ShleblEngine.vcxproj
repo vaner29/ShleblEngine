@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Components\CelestialBody.cpp" />
     <ClCompile Include="Components\CameraController.cpp" />
     <ClCompile Include="Components\Camera.cpp" />
     <ClCompile Include="Dependencies\Delegates.cpp" />
@@ -156,6 +157,7 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Components\CelestialBody.h" />
     <ClInclude Include="Components\CameraController.h" />
     <ClInclude Include="Components\Camera.h" />
     <ClInclude Include="Dependencies\Delegates.h" />

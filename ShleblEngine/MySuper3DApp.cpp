@@ -32,7 +32,7 @@ int main() {
 	//};
 	std::vector<int> indices = { 0,1,2, 0,1,3 };
 	//mygame.components_.push_back(new BaseComponent(&mygame));
-	mygame.components_.push_back(new BaseComponent(&mygame, points, indices));
+	//mygame.components_.push_back(new BaseComponent(&mygame, points, indices));
 	//mygame.components_.push_back(new SphereComponent(&mygame, 0.5f, 32, 32, DirectX::SimpleMath::Vector4(236.f / 255.f, 1.f, 134.f / 255.f, 1.f), DirectX::SimpleMath::Vector4(236.f / 255.f, 76.f, 134.f / 255.f, 1.f)));
 
 	mygame.Run();
