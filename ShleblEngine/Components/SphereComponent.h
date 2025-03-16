@@ -11,7 +11,6 @@ public:
         DirectX::SimpleMath::Vector4 col;
     };
 protected:
-    ID3D11InputLayout* layout;
     ID3D11Buffer* const_buffer_;
     UINT strides[1];
     UINT offsets[1];

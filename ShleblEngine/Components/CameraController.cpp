@@ -40,6 +40,22 @@ void CameraController::OnMouseMove(const InputDevice::MouseMoveEventArgs& args)
         }
         // Handle zooming
         relativePos *= 1 - 0.001f * game->input_dev_->MouseWheelDelta;
+        if (followShip) {
+           /* yaw -= 0.004f * game->input_dev_->MouseOffset.x;
+            while (yaw < -XM_2PI)
+                yaw += XM_2PI;
+            pitch -= 0.004f * game->input_dev_->MouseOffset.y;*/
+            Vector3 forward = game->Camera->Target - game->Camera->Position;
+            forward.Normalize();
+            Vector3 up = game->Camera->Up;
+            up.Normalize();
+
+            // Calculate yaw (rotation around the Y-axis)
+            yaw = atan2f(forward.x, forward.z);
+
+            // Calculate pitch (rotation around the X-axis)
+            pitch = asinf(-forward.y);
+        }
     }
     else
     {
@@ -67,6 +83,7 @@ void CameraController::Update()
         || game->input_dev_->IsKeyDown(Keys::D) || game->input_dev_->IsKeyDown(Keys::E) || game->input_dev_->IsKeyDown(Keys::Z)))
     {
         OrbitMode = false;
+        followShip = false;
         auto q = Quaternion::LookRotation(game->Camera->Target - game->Camera->Position, game->Camera->Up);
         auto v = q.ToEuler();
         yaw = v.y;
@@ -76,6 +93,7 @@ void CameraController::Update()
     if (game->input_dev_->IsKeyDown(Keys::D0))
     {
         OrbitMode = true;
+        followShip = false;
         targetBody = sGame->celestialBodies["sun"];
         game->Camera->Position = Vector3::Forward * 20.0f;
         game->Camera->Up = Vector3::Up;
@@ -84,6 +102,7 @@ void CameraController::Update()
     if (game->input_dev_->IsKeyDown(Keys::D1))
     {
         OrbitMode = true;
+        followShip = false;
         targetBody = sGame->celestialBodies["mercury"];
         game->Camera->Position = Vector3::Forward * 20.0f;
         game->Camera->Up = Vector3::Up;
@@ -92,6 +111,7 @@ void CameraController::Update()
     if (game->input_dev_->IsKeyDown(Keys::D2))
     {
         OrbitMode = true;
+        followShip = false;
         targetBody = sGame->celestialBodies["venus"];
         game->Camera->Position = Vector3::Forward * 20.0f;
         game->Camera->Up = Vector3::Up;
@@ -100,6 +120,7 @@ void CameraController::Update()
     if (game->input_dev_->IsKeyDown(Keys::D3))
     {
         OrbitMode = true;
+        followShip = false;
         targetBody = sGame->celestialBodies["earth"];
         game->Camera->Position = Vector3::Forward * 20.0f;
         game->Camera->Up = Vector3::Up;
@@ -108,6 +129,7 @@ void CameraController::Update()
     if (game->input_dev_->IsKeyDown(Keys::D4))
     {
         OrbitMode = true;
+        followShip = false;
         targetBody = sGame->celestialBodies["moon"];
         game->Camera->Position = Vector3::Forward * 20.0f;
         game->Camera->Up = Vector3::Up;
@@ -116,7 +138,38 @@ void CameraController::Update()
     if (game->input_dev_->IsKeyDown(Keys::D5))
     {
         OrbitMode = true;
-        targetBody = sGame->celestialBodies["mars"];
+        followShip = false;
+        targetBody = sGame->celestialBodies["moon2"];
+        game->Camera->Position = Vector3::Forward * 20.0f;
+        game->Camera->Up = Vector3::Up;
+        up = Vector3::Up;
+    }
+
+    if (game->input_dev_->IsKeyDown(Keys::D6))
+    {
+        OrbitMode = true;
+        followShip = false;
+        targetBody = sGame->celestialBodies["moon3"];
+        game->Camera->Position = Vector3::Forward * 20.0f;
+        game->Camera->Up = Vector3::Up;
+        up = Vector3::Up;
+    }
+
+    if (game->input_dev_->IsKeyDown(Keys::D7))
+    {
+        OrbitMode = true;
+        followShip = false;
+        targetBody = sGame->celestialBodies["moon4"];
+        game->Camera->Position = Vector3::Forward * 20.0f;
+        game->Camera->Up = Vector3::Up;
+        up = Vector3::Up;
+    }
+
+    if (game->input_dev_->IsKeyDown(Keys::D9))
+    {
+        OrbitMode = true;
+        followShip = true;
+        targetBody = sGame->celestialBodies["ship"];
         game->Camera->Position = Vector3::Forward * 20.0f;
         game->Camera->Up = Vector3::Up;
         up = Vector3::Up;

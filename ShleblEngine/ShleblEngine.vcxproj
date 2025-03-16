@@ -145,6 +145,7 @@
     <ClCompile Include="Components\BaseComponent.cpp" />
     <ClCompile Include="Components\SphereComponent.cpp" />
     <ClCompile Include="Components\SpaceGame.cpp" />
+    <ClCompile Include="Components\SpaceShip.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\RectangleShader.hlsl">
@@ -175,6 +176,7 @@
     <ClInclude Include="Components\SphereComponent.h" />
     <ClInclude Include="Components\SpaceGame.h" />
     <ClInclude Include="Components\GridComponent.h" />
+    <ClInclude Include="Components\SpaceShip.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Dependencies\SimpleMath.inl" />

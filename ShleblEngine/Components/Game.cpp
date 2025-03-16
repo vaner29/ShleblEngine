@@ -105,7 +105,7 @@ Game::Game(LPCWSTR name, int screen_width, int screen_height) : name_(name), fra
 	D3D_FEATURE_LEVEL featureLevel[] = { D3D_FEATURE_LEVEL_11_1 };
 
 	DXGI_SWAP_CHAIN_DESC swapDesc = {};
-	swapDesc.BufferCount = 2;
+	swapDesc.BufferCount = 3;
 	swapDesc.BufferDesc.Width = display_->client_width_;
 	swapDesc.BufferDesc.Height = display_->client_height_;
 	swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -116,7 +116,7 @@ Game::Game(LPCWSTR name, int screen_width, int screen_height) : name_(name), fra
 	swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapDesc.OutputWindow = display_->hwnd_;
 	swapDesc.Windowed = true;
-	swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 	swapDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 	swapDesc.SampleDesc.Count = 1;
 	swapDesc.SampleDesc.Quality = 0;

@@ -14,6 +14,7 @@ public:
     DirectX::SimpleMath::Vector3 relativePos;
     Game* game;
     bool OrbitMode;
+    bool followShip = false;
 
     float yaw;
     float pitch;

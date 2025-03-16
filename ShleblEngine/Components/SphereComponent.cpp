@@ -164,7 +164,7 @@ void SphereComponent::Draw()
 
 	game->context_->RSSetViewports(1, &viewport);
 
-	game->context_->IASetInputLayout(layout);
+	game->context_->IASetInputLayout(layout_);
 	game->context_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);

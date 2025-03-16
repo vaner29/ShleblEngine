@@ -21,6 +21,7 @@ struct CelestialBodyDesc
         OrbitRadius(0.0f), OrbitSpeed(0.0f), PrimaryColor(DirectX::SimpleMath::Vector4::One),
         SecondaryColor(DirectX::SimpleMath::Vector4::Zero) {
     }
+
 };
 
 class CelestialBody : public SphereComponent
