@@ -41,10 +41,6 @@ void CameraController::OnMouseMove(const InputDevice::MouseMoveEventArgs& args)
         // Handle zooming
         relativePos *= 1 - 0.001f * game->input_dev_->MouseWheelDelta;
         if (followShip) {
-           /* yaw -= 0.004f * game->input_dev_->MouseOffset.x;
-            while (yaw < -XM_2PI)
-                yaw += XM_2PI;
-            pitch -= 0.004f * game->input_dev_->MouseOffset.y;*/
             Vector3 forward = game->Camera->Target - game->Camera->Position;
             forward.Normalize();
             Vector3 up = game->Camera->Up;

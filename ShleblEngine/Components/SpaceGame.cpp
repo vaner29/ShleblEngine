@@ -155,7 +155,10 @@ void SpaceGame::Update()
 {
 	controller.Update();
 	if (controller.followShip){
-		if (input_dev_->IsKeyDown(Keys::Right))
+		const float accelerationRate = 10.0f;  // How fast acceleration increases/decreases
+		Vector3 forward = XMVector4Transform(Vector3::Backward, Matrix::CreateFromYawPitchRoll(controller.yaw, controller.pitch, 0.0f));
+		forward.Normalize();
+		/*if (input_dev_->IsKeyDown(Keys::Right))
 		{
 			Vector3 tmp = XMVector4Transform(Vector3::Left, Matrix::CreateFromYawPitchRoll(controller.yaw, controller.pitch, 0.0f));
 			tmp.Normalize();
@@ -166,21 +169,68 @@ void SpaceGame::Update()
 			Vector3 tmp = XMVector4Transform(Vector3::Right, Matrix::CreateFromYawPitchRoll(controller.yaw, controller.pitch, 0.0f));
 			tmp.Normalize();
 			ship->position += tmp * ship->speed * delta_time_;
-		}
+		}*/
 		if (input_dev_->IsKeyDown(Keys::Up))
 		{
-			Vector3 tmp = XMVector4Transform(Vector3::Backward, Matrix::CreateFromYawPitchRoll(controller.yaw, controller.pitch, 0.0f));
-			tmp.Normalize();
-			ship->position += tmp * ship->speed * delta_time_;
+			//Vector3 tmp = XMVector4Transform(Vector3::Backward, Matrix::CreateFromYawPitchRoll(controller.yaw, controller.pitch, 0.0f));
+			//tmp.Normalize();
+			ship->velocity += forward * accelerationRate * delta_time_;
 		}
 		if (input_dev_->IsKeyDown(Keys::Down))
 		{
-			Vector3 tmp = XMVector4Transform(Vector3::Forward, Matrix::CreateFromYawPitchRoll(controller.yaw, controller.pitch, 0.0f));
-			tmp.Normalize();
-			ship->position += tmp * ship->speed * delta_time_;
+			//Vector3 tmp = XMVector4Transform(Vector3::Forward, Matrix::CreateFromYawPitchRoll(controller.yaw, controller.pitch, 0.0f));
+			//tmp.Normalize();
+			ship->velocity -= forward * accelerationRate * delta_time_;
 		}
+
+		if (input_dev_->IsKeyDown(Keys::Space))
+		{
+			//Vector3 tmp = XMVector4Transform(Vector3::Forward, Matrix::CreateFromYawPitchRoll(controller.yaw, controller.pitch, 0.0f));
+			//tmp.Normalize();
+			ship->velocity = Vector3(0.0f, 0.0f, 0.0f);
+		}
+
+		//std::cout << ship->velocity.x << " " << ship->velocity.y << " " << ship->velocity.z << std::endl;
+
+		// Assuming you have access to the camera's position, target, and up vectors
+		Vector3 cameraForward = this->Camera->Target - this->Camera->Position;
+		cameraForward.Normalize();
+		Vector3 cameraUp = this->Camera->Up;
+		cameraUp.Normalize();
+
+		const float focusOffset = 3.0f; // Adjust this value as needed
+		Vector3 focusPoint = ship->position + Vector3::Up * focusOffset; // Use world's up axis
+		// Alternatively, use the camera's up axis:
+		// Vector3 focusPoint = ship->position + up * focusOffset;
+
+		this->Camera->Target = focusPoint;
+
+		Vector3 cameraRight = cameraForward.Cross(cameraUp);
+		cameraRight.Normalize();
+
+		// Define the ship's desired forward and up directions
+		Vector3 shipDesiredForward = cameraRight; // Ship's forward direction (along camera's right)
+		Vector3 shipDesiredUp = cameraForward;    // Start with cameraForward as the base up direction
+
+		// Apply a small upward tilt to the ship's up vector
+		const float tiltAngle = XMConvertToRadians(25.0f); // Adjust this angle (e.g., 15 degrees) as needed
+		Matrix tiltRotation = Matrix::CreateFromAxisAngle(cameraRight, tiltAngle); // Rotate around cameraRight
+		shipDesiredUp = XMVector3Transform(shipDesiredUp, tiltRotation); // Tilt the up vector upward
+		shipDesiredUp.Normalize();
+
+		// Create the ship's rotation quaternion
+		Quaternion shipRotation = Quaternion::CreateFromRotationMatrix(
+			Matrix::CreateWorld(Vector3::Zero, shipDesiredForward, shipDesiredUp)
+		);
+
+		// Assign the rotation to the ship
+		ship->rotation = shipRotation;
+
+
+
 	}
-	else if (Camera->IsOrthographic) {
+	ship->position += ship->velocity * delta_time_;
+	/*else if (Camera->IsOrthographic) {
 		if (input_dev_->IsKeyDown(Keys::Right))
 		{
 			ship->position += DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f) * ship->speed * delta_time_;
@@ -197,7 +247,7 @@ void SpaceGame::Update()
 		{
 			ship->position += DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f) * ship->speed * delta_time_;
 		}
-	}
+	}*/
 
 		//if (input_dev_->IsKeyDown(Keys::OemOpenBrackets))
 		//{
