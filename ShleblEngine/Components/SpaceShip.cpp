@@ -132,5 +132,6 @@ SpaceShip::SpaceShip(Game* game) : CelestialBody(game, []() {
 
 void SpaceShip::Update()
 {
-    SphereComponent::Update();
+    std::cout << absoluteVelocity.x << " " << absoluteVelocity.y << " " << absoluteVelocity.z << std::endl;
+    CelestialBody::Update();
 }

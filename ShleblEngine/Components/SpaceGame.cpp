@@ -20,12 +20,23 @@ SpaceGame::SpaceGame() : Game(L"MyGame", 800, 800), controller (this)
 	sunDesc.PrimaryColor = Vector4(236.f / 180.f, 1.f, 134.f / 255.f, 1.f);
 	sunDesc.SecondaryColor = Vector4(255.f / 255.f, 76.f / 255.f, 0.f, 1.f);
 	//sunDesc.SecondaryColor = Vector4(236.f / 255.f, 1.f, 134.f / 255.f, 1.f);
+	sunDesc.OrbitAnchor = nullptr;
 	celestialBodies.insert({ "sun", new CelestialBody(this, sunDesc) });
+
+	CelestialBodyDesc sun2Desc = {};
+	sun2Desc.SpinSpeed = 1.0f;
+	sun2Desc.Radius = 3.0f;
+	sun2Desc.OrbitAnchor = nullptr;
+	sun2Desc.PrimaryColor = Vector4(236.f / 180.f, 1.f, 134.f / 255.f, 1.f);
+	sun2Desc.SecondaryColor = Vector4(255.f / 255.f, 76.f / 255.f, 0.f, 1.f);
+	//sunDesc.SecondaryColor = Vector4(236.f / 255.f, 1.f, 134.f / 255.f, 1.f);
+	celestialBodies.insert({ "betelgeuse", new CelestialBody(this, sun2Desc) });
+	celestialBodies["betelgeuse"]->position = Vector3(35.0f, 0.0f, 0.0f);
 
 	//// Mercury
 	CelestialBodyDesc mercuryDesc = {};
 	mercuryDesc.SpinSpeed = 1.0f;
-	mercuryDesc.Radius = 0.7f;
+	mercuryDesc.Radius = 1.0f;
 	mercuryDesc.OrbitAnchor = celestialBodies["sun"];
 	mercuryDesc.OrbitRadius = 4.0f;
 	mercuryDesc.OrbitSpeed = 2.0f;
@@ -34,6 +45,7 @@ SpaceGame::SpaceGame() : Game(L"MyGame", 800, 800), controller (this)
 	//mercuryDesc.OrbitOrientationForward = XMVector4Transform(mercuryDesc.OrbitOrientationForward, Matrix::CreateFromAxisAngle(Vector3::Right, 7.0f * XM_PI / 180.0f));
 	//mercuryDesc.OrbitOrientationUp = XMVector4Transform(mercuryDesc.OrbitOrientationUp, Matrix::CreateFromAxisAngle(Vector3::Right, 7.0f * XM_PI / 180.0f));
 	celestialBodies.insert({ "mercury", new CelestialBody(this, mercuryDesc) });
+	celestialBodies["mercury"]->position = Vector3(15.0f, 2.0f, 15.0f);
 
 	//// Venus
 	CelestialBodyDesc venusDesc = {};
@@ -48,6 +60,7 @@ SpaceGame::SpaceGame() : Game(L"MyGame", 800, 800), controller (this)
 	//venusDesc.SecondaryColor = Vector4(51.f / 255.f, 25.f / 255.f, 0.0f / 255.f, 1.f);
 	venusDesc.SecondaryColor = Vector4(236.f / 255.f, 1.f, 134.f / 255.f, 1.f);
 	celestialBodies.insert({ "venus", new CelestialBody(this, venusDesc) });
+	celestialBodies["venus"]->position = Vector3(-15.0f, -2.0f, 15.0f);
 
 	//// Earth
 	CelestialBodyDesc earthDesc = {};
@@ -55,7 +68,7 @@ SpaceGame::SpaceGame() : Game(L"MyGame", 800, 800), controller (this)
 	earthDesc.Radius = 1.0f;
 	earthDesc.OrbitAnchor = celestialBodies["sun"];
 	earthDesc.OrbitRadius = 10.0f;
-	earthDesc.OrbitSpeed = 0.8f;
+	earthDesc.OrbitSpeed = 0.0f;
 	earthDesc.PrimaryColor = Vector4(0.0f, 0.0f, 0.4f, 1.0f);
 	//earthDesc.SecondaryColor = Vector4(0.0f, 0.0f, 0.5f, 1.0f);
 	earthDesc.SecondaryColor = Vector4(0.5f, 0.5f, 0.0f, 1.0f);
@@ -66,33 +79,34 @@ SpaceGame::SpaceGame() : Game(L"MyGame", 800, 800), controller (this)
 	moonDesc.SpinSpeed = 0.8f;
 	moonDesc.Radius = 0.3f;
 	moonDesc.OrbitAnchor = celestialBodies["earth"];
-	moonDesc.OrbitRadius = 2.0f;
+	moonDesc.OrbitRadius = 1.0f;
 	moonDesc.OrbitSpeed = 5.0f;
 	celestialBodies.insert({ "moon", new CelestialBody(this, moonDesc) });
 
 	CelestialBodyDesc moon2Desc = {};
 	moon2Desc.SpinSpeed = 0.8f;
-	moon2Desc.Radius = 0.15f;
+	moon2Desc.Radius = 1.0f;
 	moon2Desc.OrbitAnchor = celestialBodies["moon"];
 	moon2Desc.OrbitRadius = 1.0f;
 	moon2Desc.OrbitSpeed = 10.0f;
 	celestialBodies.insert({ "moon2", new CelestialBody(this, moon2Desc) });
 
-	CelestialBodyDesc moon3Desc = {};
-	moon3Desc.SpinSpeed = 0.8f;
-	moon3Desc.Radius = 0.075f;
-	moon3Desc.OrbitAnchor = celestialBodies["moon2"];
-	moon3Desc.OrbitRadius = 0.5f;
-	moon3Desc.OrbitSpeed = 15.0f;
-	celestialBodies.insert({ "moon3", new CelestialBody(this, moon3Desc) });
+	//CelestialBodyDesc moon3Desc = {};
+	//moon3Desc.SpinSpeed = 0.8f;
+	//moon3Desc.Radius = 0.075f;
+	//moon3Desc.OrbitAnchor = celestialBodies["moon2"];
+	//moon3Desc.OrbitRadius = 0.5f;
+	//moon3Desc.OrbitSpeed = 15.0f;
+	//celestialBodies.insert({ "moon3", new CelestialBody(this, moon3Desc) });
 
-	CelestialBodyDesc moon4Desc = {};
-	moon4Desc.SpinSpeed = 0.8f;
-	moon4Desc.Radius = 0.0375f;
-	moon4Desc.OrbitAnchor = celestialBodies["moon3"];
-	moon4Desc.OrbitRadius = 0.25f;
-	moon4Desc.OrbitSpeed = 20.0f;
-	celestialBodies.insert({ "moon4", new CelestialBody(this, moon4Desc) });
+	//CelestialBodyDesc moon4Desc = {};
+	//moon4Desc.SpinSpeed = 0.8f;
+	//moon4Desc.Radius = 0.0375f;
+	//moon4Desc.OrbitAnchor = nullptr;
+	//moon4Desc.OrbitRadius = 0.25f;
+	//moon4Desc.OrbitSpeed = 20.0f;
+	//celestialBodies.insert({ "moon4", new CelestialBody(this, moon4Desc) });
+	//celestialBodies["moon4"]->position = Vector3(-2.0f, -2.0f, 2.0f);
 
 	ship = new SpaceShip(this);
 	celestialBodies.insert({ "ship", ship });
@@ -208,54 +222,68 @@ void SpaceGame::Update()
 		Vector3 cameraRight = cameraForward.Cross(cameraUp);
 		cameraRight.Normalize();
 
-		// Define the ship's desired forward and up directions
-		Vector3 shipDesiredForward = cameraRight; // Ship's forward direction (along camera's right)
-		Vector3 shipDesiredUp = cameraForward;    // Start with cameraForward as the base up direction
+		Vector3 shipDesiredForward = cameraRight;
+		Vector3 shipDesiredUp = cameraForward;    
 
-		// Apply a small upward tilt to the ship's up vector
-		const float tiltAngle = XMConvertToRadians(25.0f); // Adjust this angle (e.g., 15 degrees) as needed
-		Matrix tiltRotation = Matrix::CreateFromAxisAngle(cameraRight, tiltAngle); // Rotate around cameraRight
-		shipDesiredUp = XMVector3Transform(shipDesiredUp, tiltRotation); // Tilt the up vector upward
+		const float tiltAngle = XMConvertToRadians(25.0f); 
+		Matrix tiltRotation = Matrix::CreateFromAxisAngle(cameraRight, tiltAngle);
+		shipDesiredUp = XMVector3Transform(shipDesiredUp, tiltRotation);
 		shipDesiredUp.Normalize();
 
-		// Create the ship's rotation quaternion
 		Quaternion shipRotation = Quaternion::CreateFromRotationMatrix(
 			Matrix::CreateWorld(Vector3::Zero, shipDesiredForward, shipDesiredUp)
 		);
 
-		// Assign the rotation to the ship
 		ship->rotation = shipRotation;
 
 
 
 	}
 	ship->position += ship->velocity * delta_time_;
-	/*else if (Camera->IsOrthographic) {
-		if (input_dev_->IsKeyDown(Keys::Right))
-		{
-			ship->position += DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f) * ship->speed * delta_time_;
-		}
-		if (input_dev_->IsKeyDown(Keys::Left))
-		{
-			ship->position += DirectX::SimpleMath::Vector3(-1.0f, 0.0f, 0.0f) * ship->speed * delta_time_;
-		}
-		if (input_dev_->IsKeyDown(Keys::Up))
-		{
-			ship->position += DirectX::SimpleMath::Vector3(0.0f, 0.0f, -1.0f) * ship->speed * delta_time_;
-		}
-		if (input_dev_->IsKeyDown(Keys::Down))
-		{
-			ship->position += DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f) * ship->speed * delta_time_;
-		}
-	}*/
 
-		//if (input_dev_->IsKeyDown(Keys::OemOpenBrackets))
-		//{
-		//	ship->position += DirectX::SimpleMath::Vector3(0.0f, 1.0f, 0.0f) * ship->speed * delta_time_;
-		//}
-		//if (input_dev_->IsKeyDown(Keys::OemCloseBrackets))
-		//{
-		//	ship->position += DirectX::SimpleMath::Vector3(0.0f, -1.0f, 0.0f) * ship->speed * delta_time_;
-		//}
+	for (auto& pair : celestialBodies)
+	{
+		ApplyGravity(pair.second, celestialBodies);
+	}
+
 	Game::Update();
+
+}
+
+void SpaceGame::ApplyGravity(CelestialBody* currentBody, const std::unordered_map<std::string, CelestialBody*>& allBodies)
+{
+	const float G = 1000.0f;        
+	const float maxSpeed = 45.0f; 
+	const float minDistance = 0.1f;
+
+	Vector3 netForce = Vector3::Zero;
+
+	for (const auto& pair : allBodies)
+	{
+		CelestialBody* other = pair.second;
+		if (other == currentBody) continue;
+
+		Vector3 direction = other->position - currentBody->position;
+		float distance = direction.Length();
+
+		float clampedDistance = max(distance, minDistance);
+		direction.Normalize();
+
+
+		float mass1 = currentBody->radius_;
+		float mass2 = other->radius_;
+
+		float forceMagnitude = G * (mass1 * mass2) / (clampedDistance * clampedDistance);
+
+		netForce += direction * forceMagnitude;
+	}
+
+	float mass = currentBody->radius_;
+	currentBody->absoluteVelocity += (netForce / mass) * this->delta_time_;
+
+	float speed = currentBody->absoluteVelocity.Length();
+	if (speed > maxSpeed)
+	{
+		currentBody->absoluteVelocity = currentBody->absoluteVelocity * (maxSpeed / speed);
+	}
 }

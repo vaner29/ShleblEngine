@@ -29,13 +29,14 @@ class CelestialBody : public SphereComponent
 protected:
     float spinSpeed;
     DirectX::SimpleMath::Vector3 spinAxis;
-    CelestialBody* orbitAnchor;
     DirectX::SimpleMath::Vector3 orbitOrientationForward;
     DirectX::SimpleMath::Vector3 orbitOrientationUp;
     float orbitRadius;
     float orbitSpeed;
-    DirectX::SimpleMath::Vector3 relativePosition;
 public:
+    CelestialBody* orbitAnchor;
+    DirectX::SimpleMath::Vector3 relativePosition;
+    DirectX::SimpleMath::Vector3 absoluteVelocity = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
     CelestialBody(Game* game, const CelestialBodyDesc& desc);
     void Update() override;
 };

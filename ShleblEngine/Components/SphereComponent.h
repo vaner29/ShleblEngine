@@ -19,6 +19,7 @@ protected:
 public:
     DirectX::SimpleMath::Quaternion rotation;
     DirectX::SimpleMath::Vector3 position;
+    float radius_;
     SphereComponent(Game* game, float radius, int sliceCount, int stackCount, DirectX::SimpleMath::Vector4 col1, DirectX::SimpleMath::Vector4 col2);
     void Draw() override;
     void Initialize() override;

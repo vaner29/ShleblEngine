@@ -7,6 +7,7 @@ using namespace SimpleMath;
 SphereComponent::SphereComponent(Game* g, float radius, int sliceCount, int stackCount, Vector4 col1, Vector4 col2)
 	: BaseComponent(g), rotation(Quaternion::Identity), position(Vector3::Zero)
 {
+	radius_ = radius;
 	Point topPoint({ Vector4(0.0f, radius, 0.0f, 1.0f), col1 });
 	Vector4::Lerp(col1, col2, 0.5f, topPoint.col);
 	Point bottomPoint({ Vector4(0.0f, -radius, 0.0f, 1.0f), col1 });
