@@ -1,5 +1,5 @@
 #include "Game.h"
-
+#include "../Tools/DataProcesser.h"
 
 LRESULT CALLBACK Game::WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 {
@@ -46,13 +46,13 @@ LRESULT CALLBACK Game::WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM l
 		{
 			if (raw->header.dwType == RIM_TYPEKEYBOARD)
 			{
-				/*printf(" Kbd: make=%04i Flags:%04i Reserved:%04i ExtraInformation:%08i, msg=%04i VK=%i \n",
-					raw->data.keyboard.MakeCode,
-					raw->data.keyboard.Flags,
-					raw->data.keyboard.Reserved,
-					raw->data.keyboard.ExtraInformation,
-					raw->data.keyboard.Message,
-					raw->data.keyboard.VKey);*/
+				//printf(" Kbd: make=%04i Flags:%04i Reserved:%04i ExtraInformation:%08i, msg=%04i VK=%i \n",
+				//	raw->data.keyboard.MakeCode,
+				//	raw->data.keyboard.Flags,
+				//	raw->data.keyboard.Reserved,
+				//	raw->data.keyboard.ExtraInformation,
+				//	raw->data.keyboard.Message,
+				//	raw->data.keyboard.VKey);
 
 				pThis->input_dev_->OnKeyDown({
 					raw->data.keyboard.MakeCode,
@@ -86,6 +86,27 @@ LRESULT CALLBACK Game::WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM l
 	}
 }
 
+void Game::CreateDepthStencilBuffer()
+{
+	D3D11_TEXTURE2D_DESC depthStencilDesc;
+
+	depthStencilDesc.Width = display_->client_width_;
+	depthStencilDesc.Height = display_->client_height_;
+	depthStencilDesc.MipLevels = 1;
+	depthStencilDesc.ArraySize = 1;
+	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthStencilDesc.CPUAccessFlags = 0;
+	depthStencilDesc.MiscFlags = 0;
+
+	HRESULT res = device_->CreateTexture2D(&depthStencilDesc, nullptr, &depth_stencil_buffer_);
+
+	res = device_->CreateDepthStencilView(depth_stencil_buffer_, nullptr, &depth_stencil_view_);
+}
+
 void Game::CreateBackBuffer()
 {
 	auto res = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer_));	// __uuidof(ID3D11Texture2D)
@@ -102,121 +123,6 @@ Game::Game(LPCWSTR name, int screen_width, int screen_height) : name_(name), fra
 	Camera = new ::Camera();
 	Camera->AspectRatio = static_cast<float>(screen_width) / static_cast<float>(screen_height);
 
-	D3D_FEATURE_LEVEL featureLevel[] = { D3D_FEATURE_LEVEL_11_1 };
-
-	DXGI_SWAP_CHAIN_DESC swapDesc = {};
-	swapDesc.BufferCount = 3;
-	swapDesc.BufferDesc.Width = display_->client_width_;
-	swapDesc.BufferDesc.Height = display_->client_height_;
-	swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapDesc.BufferDesc.RefreshRate.Numerator = 60;
-	swapDesc.BufferDesc.RefreshRate.Denominator = 1;
-	swapDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	swapDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapDesc.OutputWindow = display_->hwnd_;
-	swapDesc.Windowed = true;
-	swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-	swapDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-	swapDesc.SampleDesc.Count = 1;
-	swapDesc.SampleDesc.Quality = 0;
-
-	auto res = D3D11CreateDeviceAndSwapChain(
-		nullptr,
-		D3D_DRIVER_TYPE_HARDWARE,
-		nullptr,
-		D3D11_CREATE_DEVICE_DEBUG,
-		featureLevel,
-		1,
-		D3D11_SDK_VERSION,
-		&swapDesc,
-		&swap_chain_,
-		&device_,
-		nullptr,
-		&context_);
-
-	if (FAILED(res))
-	{
-		// Well, that was unexpected
-	}
-
-	CreateBackBuffer();
-
-	CD3D11_RASTERIZER_DESC rastDesc = {};
-	rastDesc.CullMode = D3D11_CULL_NONE;
-	rastDesc.FillMode = D3D11_FILL_SOLID;
-
-	res = device_->CreateRasterizerState(&rastDesc, &rast_state_);
-
-	context_->RSSetState(rast_state_);
-
-	ID3DBlob* errorVertexCode = nullptr;
-	auto resShader = D3DCompileFromFile(L"./Shaders/Base3dShader.hlsl",
-		nullptr /*macros*/,
-		nullptr /*include*/,
-		"VSMain",
-		"vs_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&vertex_shader_byte_code_,
-		&errorVertexCode);
-
-	if (FAILED(resShader)) {
-		// If the shader failed to compile it should have written something to the error message.
-		if (errorVertexCode) {
-			char* compileErrors = (char*)(errorVertexCode->GetBufferPointer());
-
-			std::cout << compileErrors << std::endl;
-		}
-		// If there was  nothing in the error message then it simply could not find the shader file itself.
-		else
-		{
-			MessageBox(display_->hwnd_, L"Base3dShader.hlsl", L"Missing Shader File", MB_OK);
-		}
-
-		return;
-	}
-
-	//D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr };
-
-	ID3DBlob* errorPixelCode;
-	resShader = D3DCompileFromFile(L"./Shaders/Base3dShader.hlsl",
-		nullptr /*macros*/,
-		nullptr /*include*/,
-		"PSMain",
-		"ps_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&pixel_shader_byte_code_,
-		&errorPixelCode);
-
-	device_->CreateVertexShader(
-		vertex_shader_byte_code_->GetBufferPointer(),
-		vertex_shader_byte_code_->GetBufferSize(),
-		nullptr, &vertex_shader_);
-
-	device_->CreatePixelShader(
-		pixel_shader_byte_code_->GetBufferPointer(),
-		pixel_shader_byte_code_->GetBufferSize(),
-		nullptr, &pixel_shader_);
-
-	D3D11_TEXTURE2D_DESC depthStencilDesc;
-
-	depthStencilDesc.Width = display_->client_width_;
-	depthStencilDesc.Height = display_->client_height_;
-	depthStencilDesc.MipLevels = 1;
-	depthStencilDesc.ArraySize = 1;
-	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthStencilDesc.SampleDesc.Count = 1;
-	depthStencilDesc.SampleDesc.Quality = 0;
-	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	depthStencilDesc.CPUAccessFlags = 0;
-	depthStencilDesc.MiscFlags = 0;
-
-	HRESULT res2 = device_->CreateTexture2D(&depthStencilDesc, nullptr, &depth_stencil_buffer_);
-
-	res2 = device_->CreateDepthStencilView(depth_stencil_buffer_, nullptr, &depth_stencil_view_);
 }
 
 Game::~Game()
@@ -248,35 +154,46 @@ void Game::MessageHandler()
 	}
 }
 
+void Game::InitTimer()
+{
+	prev_time_ = std::chrono::steady_clock::now();
+}
+
+void Game::UpdateTimer()
+{
+	auto	curTime = std::chrono::steady_clock::now();
+	delta_time_ = std::chrono::duration_cast<std::chrono::microseconds>(curTime - prev_time_).count() / 1000000.0f;
+	prev_time_ = curTime;
+
+	total_time_ += delta_time_;
+	frame_count_++;
+
+	if (total_time_ > 1.0f)
+	{
+		float fps = static_cast<float>(frame_count_) / total_time_;
+
+		total_time_ -= 1.0f;
+
+		WCHAR text[256];
+		swprintf_s(text, TEXT("FPS: %f"), fps);
+		SetWindowText(display_->hwnd_, text);
+
+		frame_count_ = 0;
+	}
+}
+
 
 void Game::Run()
 {
+	PrepareResources();
 	Initialize();
+	InitTimer();
 	isExitRequested = false;
-	prev_time_ = std::chrono::steady_clock::now();
-	MSG msg = {};
 	while (!isExitRequested)
 	{
 		MessageHandler();
 
-		auto	curTime = std::chrono::steady_clock::now();
-		delta_time_ = std::chrono::duration_cast<std::chrono::microseconds>(curTime - prev_time_).count() / 1000000.0f;
-		prev_time_ = curTime;
-
-		total_time_ += delta_time_;
-		frame_count_++;
-
-		if (total_time_ > 1.0f) {
-			float fps = frame_count_ / total_time_;
-
-			total_time_ -= 1.0f;
-
-			WCHAR text[256];
-			swprintf_s(text, TEXT("FPS: %f"), fps);
-			SetWindowText(display_->hwnd_, text);
-
-			frame_count_ = 0;
-		}
+		UpdateTimer();
 
 		Update();
 
@@ -284,10 +201,9 @@ void Game::Run()
 
 		Draw();
 
-		context_->OMSetRenderTargets(0, nullptr, nullptr);
-
-		swap_chain_->Present(1, /*DXGI_PRESENT_DO_NOT_WAIT*/ 0);
+		EndFrame();
 	}
+
 	Exit();
 }
 
@@ -300,8 +216,10 @@ void Game::PrepareFrame()
 
 	context_->OMSetRenderTargets(1, &render_view_, depth_stencil_view_);
 
-	context_->VSSetShader(vertex_shader_, nullptr, 0);
-	context_->PSSetShader(pixel_shader_, nullptr, 0);
+	context_->VSSetShader(DataProcesser::GetVertexShader("base"), nullptr, 0);
+	context_->PSSetShader(DataProcesser::GetPixelShader("base"), nullptr, 0);
+
+	context_->PSSetSamplers(0, 1, &sampler_state_);
 
 	SetBackgroundColor();
 	context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -339,6 +257,13 @@ void Game::Draw()
 	}
 }
 
+void Game::EndFrame()
+{
+	context_->OMSetRenderTargets(0, nullptr, nullptr);
+
+	swap_chain_->Present(1, /*DXGI_PRESENT_DO_NOT_WAIT*/ 0);
+}
+
 void Game::Initialize()
 {
 	for (auto c : components_)
@@ -356,4 +281,130 @@ void Game::Update()
 	}
 }
 
+void Game::UpdateInternal()
+{
+}
+
+
+void Game::PrepareResources()
+{
+	D3D_FEATURE_LEVEL featureLevel[] = { D3D_FEATURE_LEVEL_11_1 };
+
+	DXGI_SWAP_CHAIN_DESC swapDesc = {};
+	swapDesc.BufferCount = 2;
+	swapDesc.BufferDesc.Width = display_->client_width_;
+	swapDesc.BufferDesc.Height = display_->client_height_;
+	swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapDesc.BufferDesc.RefreshRate.Numerator = 60;
+	swapDesc.BufferDesc.RefreshRate.Denominator = 1;
+	swapDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	swapDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+	swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapDesc.OutputWindow = display_->hwnd_;
+	swapDesc.Windowed = true;
+	swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	swapDesc.SampleDesc.Count = 1;
+	swapDesc.SampleDesc.Quality = 0;
+
+	auto res = D3D11CreateDeviceAndSwapChain(
+		nullptr,
+		D3D_DRIVER_TYPE_HARDWARE,
+		nullptr,
+		D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+		featureLevel,
+		1,
+		D3D11_SDK_VERSION,
+		&swapDesc,
+		&swap_chain_,
+		&device_,
+		nullptr,
+		&context_);
+
+	if (FAILED(res))
+	{
+		// Well, that was unexpected
+	}
+
+	CreateBackBuffer();
+
+	CreateDepthStencilBuffer();
+
+	DataProcesser::Initialize(this);
+
+	D3D11_SAMPLER_DESC samplerStateDesc = {};
+	samplerStateDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerStateDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerStateDesc.MinLOD = 0.0f;
+	samplerStateDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	res = device_->CreateSamplerState(&samplerStateDesc, &sampler_state_);
+
+
+	CD3D11_RASTERIZER_DESC rastDesc = {};
+
+	rastDesc.CullMode = D3D11_CULL_BACK;
+	rastDesc.FillMode = D3D11_FILL_SOLID;
+	rastDesc.FrontCounterClockwise = true;
+	rastDesc.DepthClipEnable = true;
+
+	res = device_->CreateRasterizerState(&rastDesc, &rast_state_);
+
+	context_->RSSetState(rast_state_);
+
+
+	//ID3DBlob* errorVertexCode = nullptr;
+	//auto resShader = D3DCompileFromFile(L"./Shaders/Base3dShader.hlsl",
+	//	nullptr /*macros*/,
+	//	nullptr /*include*/,
+	//	"VSMain",
+	//	"vs_5_0",
+	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	//	0,
+	//	&vertex_shader_byte_code_,
+	//	&errorVertexCode);
+
+	//if (FAILED(resShader)) {
+	//	// If the shader failed to compile it should have written something to the error message.
+	//	if (errorVertexCode) {
+	//		char* compileErrors = (char*)(errorVertexCode->GetBufferPointer());
+
+	//		std::cout << compileErrors << std::endl;
+	//	}
+	//	// If there was  nothing in the error message then it simply could not find the shader file itself.
+	//	else
+	//	{
+	//		MessageBox(display_->hwnd_, L"Base3dShader.hlsl", L"Missing Shader File", MB_OK);
+	//	}
+
+	//	return;
+	//}
+
+	////D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr };
+
+	//ID3DBlob* errorPixelCode;
+	//resShader = D3DCompileFromFile(L"./Shaders/Base3dShader.hlsl",
+	//	nullptr /*macros*/,
+	//	nullptr /*include*/,
+	//	"PSMain",
+	//	"ps_5_0",
+	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	//	0,
+	//	&pixel_shader_byte_code_,
+	//	&errorPixelCode);
+
+	//device_->CreateVertexShader(
+	//	vertex_shader_byte_code_->GetBufferPointer(),
+	//	vertex_shader_byte_code_->GetBufferSize(),
+	//	nullptr, &vertex_shader_);
+
+	//device_->CreatePixelShader(
+	//	pixel_shader_byte_code_->GetBufferPointer(),
+	//	pixel_shader_byte_code_->GetBufferSize(),
+	//	nullptr, &pixel_shader_);
+
+}
 

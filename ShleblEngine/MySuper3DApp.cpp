@@ -8,11 +8,13 @@
 #include "Components/RectangleComponent.h"
 #include "Components/SphereComponent.h"
 #include <vector>
+#include "KatamariComponents/KatamariGame.h"
 
 int main() {
 	//PongGame mygame = PongGame();
 	//Game mygame = Game(L"MyGame", 800, 800);
-	SpaceGame mygame = SpaceGame();
+	//SpaceGame mygame = SpaceGame();
+	KatamariGame mygame = KatamariGame();
 	/*std::vector<DirectX::XMFLOAT4> points = {
 		DirectX::XMFLOAT4(0.5f, 0.5f, 0, 1.0f),	DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
 		DirectX::XMFLOAT4(-0.5f, -0.5f, 0, 1.0f),	DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),

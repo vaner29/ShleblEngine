@@ -27,14 +27,20 @@ class Game
 private:
 	bool isExitRequested;
 	void CreateBackBuffer();
+	void CreateDepthStencilBuffer();
+	void InitTimer();
+	void UpdateTimer();
 
 protected:
 	virtual void SetBackgroundColor();
 	virtual void DestroyResources();
 	virtual void Draw();
+	virtual void EndFrame();
 	virtual void Initialize();
-	virtual void Update();
 	virtual void PrepareFrame();
+	virtual void PrepareResources();
+	virtual void Update();
+	virtual void UpdateInternal();
 public:
 	ID3D11Texture2D* depth_stencil_buffer_;
 	ID3D11DepthStencilView* depth_stencil_view_;
@@ -54,6 +60,7 @@ public:
 	ID3D11Texture2D* render_srv_;
 	ID3D11RenderTargetView* render_view_;
 	ID3D11RasterizerState* rast_state_;
+	ID3D11SamplerState* sampler_state_;
 	//int screen_resized_;
 	//float start_time_;
 	IDXGISwapChain* swap_chain_;

@@ -1,10 +1,9 @@
 #include "GameComponent.h"
 #include "Game.h"
 
-GameComponent::GameComponent(Game* g) : game(g)
-{
-}
+using namespace DirectX;
+using namespace SimpleMath;
 
-GameComponent::~GameComponent()
+GameComponent::GameComponent(Game* g) : game(g), position(Vector3::Zero), rotation(Quaternion::Identity), scale(Vector3::One)
 {
 }

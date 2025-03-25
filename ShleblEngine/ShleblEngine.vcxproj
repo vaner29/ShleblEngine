@@ -130,6 +130,13 @@
     <ClCompile Include="Components\CelestialBody.cpp" />
     <ClCompile Include="Components\CameraController.cpp" />
     <ClCompile Include="Components\Camera.cpp" />
+    <ClCompile Include="Components\ObjectComponent.cpp" />
+    <ClCompile Include="Dependencies\DDSTextureLoader.cpp" />
+    <ClCompile Include="Dependencies\DirectXHelpers.cpp" />
+    <ClCompile Include="KatamariComponents\KatamariGame.cpp" />
+    <ClCompile Include="KatamariComponents\KatamariBall.cpp" />
+    <ClCompile Include="KatamariComponents\KatamariTrash.cpp" />
+    <ClCompile Include="Tools\DataProcesser.cpp" />
     <ClCompile Include="Dependencies\Delegates.cpp" />
     <ClCompile Include="Components\DisplayWin32.cpp" />
     <ClCompile Include="Components\Game.cpp" />
@@ -161,6 +168,17 @@
     <ClInclude Include="Components\CelestialBody.h" />
     <ClInclude Include="Components\CameraController.h" />
     <ClInclude Include="Components\Camera.h" />
+    <ClInclude Include="Components\ObjectComponent.h" />
+    <ClInclude Include="Dependencies\DDSTextureLoader.h" />
+    <ClInclude Include="Dependencies\DDS.h" />
+    <ClInclude Include="Dependencies\PlatformHelpers.h" />
+    <ClInclude Include="Dependencies\LoaderHelpers.h" />
+    <ClInclude Include="Dependencies\DirectXHelpers.h" />
+    <ClInclude Include="Dependencies\Effects.h" />
+    <ClInclude Include="KatamariComponents\KatamariGame.h" />
+    <ClInclude Include="KatamariComponents\KatamariBall.h" />
+    <ClInclude Include="KatamariComponents\KatamariTrash.h" />
+    <ClInclude Include="Tools\DataProcesser.h" />
     <ClInclude Include="Dependencies\Delegates.h" />
     <ClInclude Include="Components\DisplayWin32.h" />
     <ClInclude Include="Components\Game.h" />
@@ -177,12 +195,38 @@
     <ClInclude Include="Components\SpaceGame.h" />
     <ClInclude Include="Components\GridComponent.h" />
     <ClInclude Include="Components\SpaceShip.h" />
+    <ClInclude Include="Components\Vertex.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Dependencies\SimpleMath.inl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="Dependencies\Delegates.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="Models\bread.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">True</ExcludedFromBuild>
+    </Object>
+    <Object Include="Models\cucumber.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">True</ExcludedFromBuild>
+    </Object>
+    <Object Include="Models\Gabriel.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">True</ExcludedFromBuild>
+    </Object>
+    <Object Include="Models\maxwell.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">True</ExcludedFromBuild>
+    </Object>
+    <Object Include="Models\melon.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">True</ExcludedFromBuild>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Textures\bread.dds" />
+    <Image Include="Textures\cucumber.dds" />
+    <Image Include="Textures\melon.dds" />
+    <Image Include="Textures\gabriel.dds" />
+    <Image Include="Textures\pavement.dds" />
+    <Image Include="Textures\slime.dds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

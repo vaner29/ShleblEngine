@@ -69,6 +69,30 @@
     <ClCompile Include="Components\CelestialBody.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Components\SpaceShip.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Tools\DataProcesser.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Components\ObjectComponent.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\DDSTextureLoader.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\DirectXHelpers.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="KatamariComponents\KatamariBall.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="KatamariComponents\KatamariGame.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="KatamariComponents\KatamariTrash.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MyVeryFirstShader.hlsl" />
@@ -129,6 +153,45 @@
     <ClInclude Include="Components\CelestialBody.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="Components\SpaceShip.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Tools\DataProcesser.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\Vertex.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\ObjectComponent.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\DDS.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\DDSTextureLoader.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\PlatformHelpers.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\LoaderHelpers.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\DirectXHelpers.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\Effects.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="KatamariComponents\KatamariBall.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="KatamariComponents\KatamariGame.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="KatamariComponents\KatamariTrash.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Dependencies\SimpleMath.inl">
@@ -137,5 +200,20 @@
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="Dependencies\Delegates.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="Models\maxwell.obj" />
+    <Object Include="Models\Gabriel.obj" />
+    <Object Include="Models\bread.obj" />
+    <Object Include="Models\cucumber.obj" />
+    <Object Include="Models\melon.obj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Textures\gabriel.dds" />
+    <Image Include="Textures\pavement.dds" />
+    <Image Include="Textures\slime.dds" />
+    <Image Include="Textures\bread.dds" />
+    <Image Include="Textures\cucumber.dds" />
+    <Image Include="Textures\melon.dds" />
   </ItemGroup>
 </Project>

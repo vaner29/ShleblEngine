@@ -1,29 +1,19 @@
 #include "CameraController.h"
 #include "SpaceGame.h"
+#include "../KatamariComponents/KatamariGame.h"
 
 using namespace DirectX;
 using namespace SimpleMath;
 
-CameraController::CameraController(Game* g) : targetBody(nullptr), up(Vector3::Up), game(g), OrbitMode(true), speed(0.2f)
+CameraController::CameraController(Game* g) : up(Vector3::Up), game(g), OrbitMode(true), speed(0.2f)
 {
     sGame = dynamic_cast<SpaceGame*>(g);
+    kGame = dynamic_cast<KatamariGame*>(g);
     relativePos = game->Camera->Position;
 }
 
 void CameraController::OnMouseMove(const InputDevice::MouseMoveEventArgs& args)
 {
-    //if (OrbitMode)
-    //{
-    //    if (game->input_dev_->IsKeyDown(Keys::LeftButton))
-    //    {
-    //        auto right = relativePos.Cross(up);
-    //        auto qua = Quaternion::CreateFromAxisAngle(up, 0.005f * game->input_dev_->MouseOffset.x) * Quaternion::CreateFromAxisAngle(right, -0.005f * game->input_dev_->MouseOffset.y);
-    //        relativePos = XMVector4Transform(relativePos, Matrix::CreateFromQuaternion(qua));
-    //        up = XMVector4Transform(up, Matrix::CreateFromQuaternion(qua));
-    //        game->Camera->Up = up;
-    //    }
-    //    relativePos *= 1 - 0.001f * game->input_dev_->MouseWheelDelta;
-    //}
     if (OrbitMode)
     {
         if (game->input_dev_->IsKeyDown(Keys::LeftButton))
@@ -75,109 +65,109 @@ void CameraController::Update()
     if (game->input_dev_->IsKeyDown(Keys::F2))
         game->Camera->IsOrthographic = true;
 
-    if (OrbitMode && (game->input_dev_->IsKeyDown(Keys::W) || game->input_dev_->IsKeyDown(Keys::A) || game->input_dev_->IsKeyDown(Keys::S)
-        || game->input_dev_->IsKeyDown(Keys::D) || game->input_dev_->IsKeyDown(Keys::E) || game->input_dev_->IsKeyDown(Keys::Z)))
-    {
-        OrbitMode = false;
-        followShip = false;
-        auto q = Quaternion::LookRotation(game->Camera->Target - game->Camera->Position, game->Camera->Up);
-        auto v = q.ToEuler();
-        yaw = v.y;
-        pitch = 0.0f;
-        targetBody = nullptr;
-    }
+    //if (OrbitMode && (game->input_dev_->IsKeyDown(Keys::W) || game->input_dev_->IsKeyDown(Keys::A) || game->input_dev_->IsKeyDown(Keys::S)
+    //    || game->input_dev_->IsKeyDown(Keys::D) || game->input_dev_->IsKeyDown(Keys::E) || game->input_dev_->IsKeyDown(Keys::Z)))
+    //{
+    //    OrbitMode = false;
+    //    followShip = false;
+    //    auto q = Quaternion::LookRotation(game->Camera->Target - game->Camera->Position, game->Camera->Up);
+    //    auto v = q.ToEuler();
+    //    yaw = v.y;
+    //    pitch = 0.0f;
+    //    targetBody = nullptr;
+    //}
     if (game->input_dev_->IsKeyDown(Keys::D0))
     {
         OrbitMode = true;
         followShip = false;
-        targetBody = sGame->celestialBodies["sun"];
+        targetBall = kGame->ball;
         game->Camera->Position = Vector3::Forward * 20.0f;
         game->Camera->Up = Vector3::Up;
         up = Vector3::Up;
     }
-    if (game->input_dev_->IsKeyDown(Keys::D1))
+    //if (game->input_dev_->IsKeyDown(Keys::D1))
+    //{
+    //    OrbitMode = true;
+    //    followShip = false;
+    //    targetBody = sGame->celestialBodies["mercury"];
+    //    game->Camera->Position = Vector3::Forward * 20.0f;
+    //    game->Camera->Up = Vector3::Up;
+    //    up = Vector3::Up;
+    //}
+    //if (game->input_dev_->IsKeyDown(Keys::D2))
+    //{
+    //    OrbitMode = true;
+    //    followShip = false;
+    //    targetBody = sGame->celestialBodies["venus"];
+    //    game->Camera->Position = Vector3::Forward * 20.0f;
+    //    game->Camera->Up = Vector3::Up;
+    //    up = Vector3::Up;
+    //}
+    //if (game->input_dev_->IsKeyDown(Keys::D3))
+    //{
+    //    OrbitMode = true;
+    //    followShip = false;
+    //    targetBody = sGame->celestialBodies["earth"];
+    //    game->Camera->Position = Vector3::Forward * 20.0f;
+    //    game->Camera->Up = Vector3::Up;
+    //    up = Vector3::Up;
+    //}
+    //if (game->input_dev_->IsKeyDown(Keys::D4))
+    //{
+    //    OrbitMode = true;
+    //    followShip = false;
+    //    targetBody = sGame->celestialBodies["moon"];
+    //    game->Camera->Position = Vector3::Forward * 20.0f;
+    //    game->Camera->Up = Vector3::Up;
+    //    up = Vector3::Up;
+    //}
+    //if (game->input_dev_->IsKeyDown(Keys::D5))
+    //{
+    //    OrbitMode = true;
+    //    followShip = false;
+    //    targetBody = sGame->celestialBodies["moon2"];
+    //    game->Camera->Position = Vector3::Forward * 20.0f;
+    //    game->Camera->Up = Vector3::Up;
+    //    up = Vector3::Up;
+    //}
+
+    //if (game->input_dev_->IsKeyDown(Keys::D6))
+    //{
+    //    OrbitMode = true;
+    //    followShip = false;
+    //    targetBody = sGame->celestialBodies["moon3"];
+    //    game->Camera->Position = Vector3::Forward * 20.0f;
+    //    game->Camera->Up = Vector3::Up;
+    //    up = Vector3::Up;
+    //}
+
+    //if (game->input_dev_->IsKeyDown(Keys::D7))
+    //{
+    //    OrbitMode = true;
+    //    followShip = false;
+    //    targetBody = sGame->celestialBodies["moon4"];
+    //    game->Camera->Position = Vector3::Forward * 20.0f;
+    //    game->Camera->Up = Vector3::Up;
+    //    up = Vector3::Up;
+    //}
+
+    //if (game->input_dev_->IsKeyDown(Keys::D9))
+    //{
+    //    OrbitMode = true;
+    //    followShip = true;
+    //    targetBody = sGame->celestialBodies["ship"];
+    //    game->Camera->Position = Vector3::Forward * 20.0f;
+    //    game->Camera->Up = Vector3::Up;
+    //    up = Vector3::Up;
+    //}
+
+    if (OrbitMode && targetBall)
     {
-        OrbitMode = true;
-        followShip = false;
-        targetBody = sGame->celestialBodies["mercury"];
-        game->Camera->Position = Vector3::Forward * 20.0f;
-        game->Camera->Up = Vector3::Up;
-        up = Vector3::Up;
-    }
-    if (game->input_dev_->IsKeyDown(Keys::D2))
-    {
-        OrbitMode = true;
-        followShip = false;
-        targetBody = sGame->celestialBodies["venus"];
-        game->Camera->Position = Vector3::Forward * 20.0f;
-        game->Camera->Up = Vector3::Up;
-        up = Vector3::Up;
-    }
-    if (game->input_dev_->IsKeyDown(Keys::D3))
-    {
-        OrbitMode = true;
-        followShip = false;
-        targetBody = sGame->celestialBodies["earth"];
-        game->Camera->Position = Vector3::Forward * 20.0f;
-        game->Camera->Up = Vector3::Up;
-        up = Vector3::Up;
-    }
-    if (game->input_dev_->IsKeyDown(Keys::D4))
-    {
-        OrbitMode = true;
-        followShip = false;
-        targetBody = sGame->celestialBodies["moon"];
-        game->Camera->Position = Vector3::Forward * 20.0f;
-        game->Camera->Up = Vector3::Up;
-        up = Vector3::Up;
-    }
-    if (game->input_dev_->IsKeyDown(Keys::D5))
-    {
-        OrbitMode = true;
-        followShip = false;
-        targetBody = sGame->celestialBodies["moon2"];
-        game->Camera->Position = Vector3::Forward * 20.0f;
-        game->Camera->Up = Vector3::Up;
-        up = Vector3::Up;
+        game->Camera->Target = targetBall->GetPosition();
+        game->Camera->Position = targetBall->GetPosition() + relativePos;
     }
 
-    if (game->input_dev_->IsKeyDown(Keys::D6))
-    {
-        OrbitMode = true;
-        followShip = false;
-        targetBody = sGame->celestialBodies["moon3"];
-        game->Camera->Position = Vector3::Forward * 20.0f;
-        game->Camera->Up = Vector3::Up;
-        up = Vector3::Up;
-    }
-
-    if (game->input_dev_->IsKeyDown(Keys::D7))
-    {
-        OrbitMode = true;
-        followShip = false;
-        targetBody = sGame->celestialBodies["moon4"];
-        game->Camera->Position = Vector3::Forward * 20.0f;
-        game->Camera->Up = Vector3::Up;
-        up = Vector3::Up;
-    }
-
-    if (game->input_dev_->IsKeyDown(Keys::D9))
-    {
-        OrbitMode = true;
-        followShip = true;
-        targetBody = sGame->celestialBodies["ship"];
-        game->Camera->Position = Vector3::Forward * 20.0f;
-        game->Camera->Up = Vector3::Up;
-        up = Vector3::Up;
-    }
-
-    if (OrbitMode && targetBody)
-    {
-        game->Camera->Target = targetBody->position;
-        game->Camera->Position = targetBody->position + relativePos;
-    }
-
-    if (OrbitMode && !targetBody)
+    if (OrbitMode && !targetBall)
     {
         game->Camera->Target = Vector3::Zero;
         game->Camera->Position = relativePos;
