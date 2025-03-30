@@ -45,29 +45,38 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
 
     for (int i = 0; i < 10; ++i)
     {
-        KatamariTrash* duck = new KatamariTrash(this, "Models/melon.obj", L"Textures/melon.dds", 2.0f, Vector3(0.0f, 0.0f, 0.0f));
-        duck->SetScale(Vector3(10.f,10.f, 10.f));
-        duck->SetPosition(Vector3(static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f, 0.0f, static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f));
-        duck->collision.Radius = 1.f;
-        components_.push_back(duck);
-        furniture.push_back(duck);
+        KatamariTrash* melon = new KatamariTrash(this, "Models/melon.obj", L"Textures/melon.dds", 2.0f, Vector3(0.0f, 0.0f, 0.0f));
+        melon->SetScale(Vector3(10.f,10.f, 10.f));
+        melon->SetPosition(Vector3(static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f, 0.0f, static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f));
+        melon->collision.Radius = 1.f;
+        components_.push_back(melon);
+        furniture.push_back(melon);
     }
     for (int i = 0; i < 10; ++i)
     {
-        KatamariTrash* duck = new KatamariTrash(this, "Models/cucumber.obj", L"Textures/cucumber.dds", 0.9f, Vector3(0.0f, 0.0f, 0.0f));
-        duck->SetScale(Vector3(7.f, 7.f, 7.f));
-        duck->SetPosition(Vector3(static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f, 0.0f, static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f));
-        duck->collision.Radius = 0.8f;
-        components_.push_back(duck);
-        furniture.push_back(duck);
+        KatamariTrash* cucumber = new KatamariTrash(this, "Models/cucumber.obj", L"Textures/cucumber.dds", 0.9f, Vector3(0.0f, 0.0f, 0.0f));
+        cucumber->SetScale(Vector3(7.f, 7.f, 7.f));
+        cucumber->SetPosition(Vector3(static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f, 0.0f, static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f));
+        cucumber->collision.Radius = 0.8f;
+        components_.push_back(cucumber);
+        furniture.push_back(cucumber);
     }
 
-    KatamariTrash* sofa = new KatamariTrash(this, "Models/bread.obj", L"Textures/bread.dds", 3.0f, Vector3(0.0f, 1.0f, 0.0f));
-    sofa->SetScale(Vector3(50.0f, 50.0f, 50.0f));
-    sofa->SetPosition(Vector3(30.0f, 0.0f, 10.0f));
-    sofa->collision.Radius = 2.5f;
-    components_.push_back(sofa);
-    furniture.push_back(sofa);
+    KatamariTrash* bread = new KatamariTrash(this, "Models/bread.obj", L"Textures/bread.dds", 3.0f, Vector3(0.0f, 1.0f, 0.0f));
+    bread->SetScale(Vector3(50.0f, 50.0f, 50.0f));
+    bread->SetPosition(Vector3(30.0f, 0.0f, 10.0f));
+    bread->collision.Radius = 2.5f;
+    components_.push_back(bread);
+    furniture.push_back(bread);
+    cameraController.targetBall = ball;
+
+    KatamariTrash* car = new KatamariTrash(this, "Models/car.obj", L"Textures/car.dds", 7.0f, Vector3(0.0f, 1.0f, 0.0f));
+    car->SetScale(Vector3(30.0f, 30.0f, 30.0f));
+    car->SetRotation(Quaternion::CreateFromAxisAngle(Vector3::Right, XM_PI / 2.0f));
+    car->SetPosition(Vector3(-30.0f, 0.0f, 10.0f));
+    car->collision.Radius = 10.f;
+    components_.push_back(car);
+    furniture.push_back(car);
     cameraController.targetBall = ball;
 }
 

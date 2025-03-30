@@ -207,6 +207,9 @@
     <Object Include="Models\bread.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">True</ExcludedFromBuild>
     </Object>
+    <Object Include="Models\car.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">True</ExcludedFromBuild>
+    </Object>
     <Object Include="Models\cucumber.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">True</ExcludedFromBuild>
     </Object>
@@ -222,6 +225,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Textures\bread.dds" />
+    <Image Include="Textures\car.dds" />
     <Image Include="Textures\cucumber.dds" />
     <Image Include="Textures\melon.dds" />
     <Image Include="Textures\gabriel.dds" />

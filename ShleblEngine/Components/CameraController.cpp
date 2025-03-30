@@ -69,7 +69,7 @@ void CameraController::Update()
     //    || game->input_dev_->IsKeyDown(Keys::D) || game->input_dev_->IsKeyDown(Keys::E) || game->input_dev_->IsKeyDown(Keys::Z)))
     //{
     //    OrbitMode = false;
-    //    followShip = false;
+    //    followShip = false;a
     //    auto q = Quaternion::LookRotation(game->Camera->Target - game->Camera->Position, game->Camera->Up);
     //    auto v = q.ToEuler();
     //    yaw = v.y;

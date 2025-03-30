@@ -207,6 +207,7 @@
     <Object Include="Models\bread.obj" />
     <Object Include="Models\cucumber.obj" />
     <Object Include="Models\melon.obj" />
+    <Object Include="Models\car.obj" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Textures\gabriel.dds" />
@@ -215,5 +216,6 @@
     <Image Include="Textures\bread.dds" />
     <Image Include="Textures\cucumber.dds" />
     <Image Include="Textures\melon.dds" />
+    <Image Include="Textures\car.dds" />
   </ItemGroup>
 </Project>
