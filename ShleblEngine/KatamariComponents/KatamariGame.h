@@ -15,4 +15,5 @@ public:
     std::vector<KatamariTrash*> furniture{};
     KatamariGame();
     void Update() override;
+    void PrepareFrame() override;
 };

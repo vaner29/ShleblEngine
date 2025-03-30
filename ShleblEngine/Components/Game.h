@@ -64,6 +64,7 @@ public:
 	//int screen_resized_;
 	//float start_time_;
 	IDXGISwapChain* swap_chain_;
+	float totalest_time_ = 0.0f;
 	float total_time_;
 	float delta_time_;
 	std::vector<GameComponent*> components_;

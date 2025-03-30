@@ -18,8 +18,8 @@ cbuffer cbPerObject : register(b0)
 {
     float4x4 gWorldViewProj;
     float4x4 gInvTrWorld;
-    float isSpinningFloor; // 0 = no spin, 1 = spin
-    float3 padding; // Align to 16-byte boundary (64 bytes total)
+    float isSpinningFloor;
+    float3 padding;
 };
 
 cbuffer cbPerScene : register(b1)
@@ -27,8 +27,8 @@ cbuffer cbPerScene : register(b1)
     float4 lightDir;
     float4 lightColorAmbStr;
     float4 viewDirSpecStr;
-    float gTime; // Add time for animation
-    float3 padding2; // Align to 16-byte boundary (64 bytes total)
+    float gTime;
+    float3 padding2;
 };
 
 Texture2D DiffuseMap : register(t0);
@@ -56,7 +56,7 @@ float4 PSMain(PS_IN input) : SV_Target
 #endif
 
     float4 objColor;
-    if (isSpinningFloor > 0.5f) // Enable spinning for this object
+    if (isSpinningFloor > 0.5f)
     {
         // Extract tile and local coordinates
         float2 texCoord = input.tex.xy;
@@ -64,14 +64,28 @@ float4 PSMain(PS_IN input) : SV_Target
         float2 localCoord = frac(texCoord);
         float2 centeredCoord = localCoord - 0.5f;
 
-        // Clockwise rotation
+        // Determine rotation direction based on tile position (checkerboard pattern)
+        float tileSum = tileCoord.x + tileCoord.y;
+        bool isClockwise = fmod(tileSum, 2.0f) < 1.0f; // Even sum = clockwise, odd = counterclockwise
+
+        // Rotation parameters
         float spinSpeed = 1.0f; // Radians per second
         float angle = gTime * spinSpeed;
         float cosA = cos(angle);
         float sinA = sin(angle);
-        float2x2 rotationMatrix = float2x2(cosA, sinA, -sinA, cosA);
 
-        // Rotate and recombine
+        // Rotation matrix: clockwise or counterclockwise
+        float2x2 rotationMatrix;
+        if (isClockwise)
+        {
+            rotationMatrix = float2x2(cosA, sinA, -sinA, cosA); // Clockwise
+        }
+        else
+        {
+            rotationMatrix = float2x2(cosA, -sinA, sinA, cosA); // Counterclockwise
+        }
+
+        // Apply rotation and recombine
         float2 rotatedCoord = mul(centeredCoord, rotationMatrix);
         float2 finalCoord = tileCoord + (rotatedCoord + 0.5f);
 

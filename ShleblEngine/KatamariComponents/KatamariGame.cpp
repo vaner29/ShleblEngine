@@ -4,6 +4,7 @@
 #include "KatamariTrash.h"
 #include "../Components/RectangleComponent.h"
 #include "KatamariBall.h"
+#include "../Tools/DataProcesser.h"
 
 using namespace DirectX;
 using namespace SimpleMath;
@@ -16,7 +17,7 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
     ball->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
     components_.push_back(ball);
 
-    RectangleComponent* quad = new RectangleComponent(this, L"Textures/pavement.dds");
+    RectangleComponent* quad = new RectangleComponent(this, L"Textures/square.dds");
     quad->SetRotation(Quaternion::CreateFromAxisAngle(Vector3::Left, XM_PI / 2.0f));
     quad->SetScale(Vector3::One * 1000.0f);
     components_.push_back(quad);
@@ -99,4 +100,22 @@ void KatamariGame::Update()
     if (dir.Length() > 0.0f)
         ball->SetDirection(dir);
     Game::Update();
+}
+
+void KatamariGame::PrepareFrame()
+{
+
+    context_->ClearState();
+
+    context_->RSSetState(rast_state_);
+
+    context_->OMSetRenderTargets(1, &render_view_, depth_stencil_view_);
+
+    context_->VSSetShader(DataProcesser::GetVertexShader("spinny"), nullptr, 0);
+    context_->PSSetShader(DataProcesser::GetPixelShader("spinny"), nullptr, 0);
+
+    context_->PSSetSamplers(0, 1, &sampler_state_);
+
+    SetBackgroundColor();
+    context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }

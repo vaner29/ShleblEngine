@@ -16,12 +16,16 @@ public:
 	{
 		DirectX::SimpleMath::Matrix worldViewProj;
 		DirectX::SimpleMath::Matrix invTrWorld;
+		float isSpinningFloor;
+		float padding[3]; // Align to 64 bytes
 	};
 	struct CBDataPerScene
 	{
 		DirectX::SimpleMath::Vector4 lightPos;
 		DirectX::SimpleMath::Vector4 lightColorAmbStr;
 		DirectX::SimpleMath::Vector4 viewDirSpecStr;
+		float gTime;
+		float padding[3]; // Align to 64 bytes
 	};
 protected:
 	ID3D11InputLayout* layout_;
@@ -49,4 +53,5 @@ public:
 	void Draw() override;
 	void Initialize() override;
 	void Update() override;
+	float isSpinningFloor = 0.0f;
 };

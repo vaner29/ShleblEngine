@@ -166,6 +166,7 @@ void Game::UpdateTimer()
 	prev_time_ = curTime;
 
 	total_time_ += delta_time_;
+	totalest_time_ += delta_time_;
 	frame_count_++;
 
 	if (total_time_ > 1.0f)

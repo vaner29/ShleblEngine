@@ -185,6 +185,7 @@ void BaseComponent::Update()
 	CBDataPerObject objData = {};
 	objData.worldViewProj = world * game->Camera->GetMatrix();
 	objData.invTrWorld = (Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation)).Invert().Transpose();
+	objData.isSpinningFloor = this->isSpinningFloor;
 
 	CBDataPerScene sceneData = {};
 	sceneData.lightPos = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
@@ -193,6 +194,7 @@ void BaseComponent::Update()
 	sceneData.viewDirSpecStr.Normalize();
 	sceneData.viewDirSpecStr.w = 0.5f;
 	sceneData.lightPos.Normalize();
+	sceneData.gTime = game->totalest_time_; // Use Game’s total_time_
 
 	game->context_->UpdateSubresource(const_buffers_[0], 0, nullptr, &objData, 0, 0);
 	game->context_->UpdateSubresource(const_buffers_[1], 0, nullptr, &sceneData, 0, 0);

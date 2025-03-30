@@ -224,6 +224,7 @@
     </Object>
   </ItemGroup>
   <ItemGroup>
+    <Image Include="C:\Users\glebm\Downloads\square-shape-illustration-graphic-vector.dds" />
     <Image Include="Textures\bread.dds" />
     <Image Include="Textures\car.dds" />
     <Image Include="Textures\cucumber.dds" />
@@ -231,6 +232,7 @@
     <Image Include="Textures\gabriel.dds" />
     <Image Include="Textures\pavement.dds" />
     <Image Include="Textures\slime.dds" />
+    <Image Include="Textures\square.dds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
