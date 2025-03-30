@@ -48,24 +48,13 @@ PS_IN VSMain(VS_IN input)
 float4 PSMain(PS_IN input) : SV_Target
 {
 #ifdef TREAT_TEX_AS_COL
-	return input.tex;
+    return input.tex;
 #endif
 
     float4 ambient = lightColorAmbStr.w * float4(lightColorAmbStr.xyz, 1.0f);
     float4 objColor = DiffuseMap.SampleLevel(Sampler, input.tex.xy, 0);
 
-    float4 norm = normalize(input.normal);
-    float diff = max(dot(norm, lightDir), 0.0f);
-    float4 diffuse = diff * float4(lightColorAmbStr.xyz, 1.0f);
-
-    float4 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDirSpecStr.xyz, reflectDir.xyz), 0.0f), 32);
-    float4 specular = viewDirSpecStr.w * spec * float4(lightColorAmbStr.xyz, 1.0f);
-
-    float4 result = (ambient + diffuse + specular) * objColor;
-	
+    float4 result = ambient * objColor;
+    
     return float4(result.xyz, 1.0f);
-
-	//return norm;
-	//return DiffuseMap.SampleLevel(Sampler, input.tex.xy, 0);
 }
