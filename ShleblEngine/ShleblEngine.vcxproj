@@ -220,14 +220,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">True</ExcludedFromBuild>
     </Object>
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="Textures\bread.dds" />
-    <Image Include="Textures\cucumber.dds" />
-    <Image Include="Textures\melon.dds" />
-    <Image Include="Textures\gabriel.dds" />
-    <Image Include="Textures\pavement.dds" />
-    <Image Include="Textures\slime.dds" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

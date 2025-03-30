@@ -208,12 +208,4 @@
     <Object Include="Models\cucumber.obj" />
     <Object Include="Models\melon.obj" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="Textures\gabriel.dds" />
-    <Image Include="Textures\pavement.dds" />
-    <Image Include="Textures\slime.dds" />
-    <Image Include="Textures\bread.dds" />
-    <Image Include="Textures\cucumber.dds" />
-    <Image Include="Textures\melon.dds" />
-  </ItemGroup>
 </Project>
