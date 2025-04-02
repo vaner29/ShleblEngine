@@ -28,6 +28,8 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
         cat->SetScale(Vector3(0.0009f, 0.0009f, 0.0009f));
         cat->SetPosition(Vector3(static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f, 0.0f, static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f));
         cat->collision.Radius = 0.4f;
+        cat->diffuseColor = DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f);
+        cat->shininess = 100.0f;
         components_.push_back(cat);
         furniture.push_back(cat);
     }
@@ -49,6 +51,9 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
         KatamariTrash* melon = new KatamariTrash(this, "Models/melon.obj", L"Textures/melon.dds", 2.0f, Vector3(0.0f, 0.0f, 0.0f));
         melon->SetScale(Vector3(10.f,10.f, 10.f));
         melon->SetPosition(Vector3(static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f, 0.0f, static_cast<float>(rand()) / RAND_MAX * 100.0f - 50.0f));
+        melon->shininess = 1000.f;
+        melon->specularColor = DirectX::SimpleMath::Vector3(5.0f, 1.0f, 0.0f);
+        melon->diffuseColor = DirectX::SimpleMath::Vector3(5.0f, 1.0f, 0.0f);
         melon->collision.Radius = 1.f;
         components_.push_back(melon);
         furniture.push_back(melon);

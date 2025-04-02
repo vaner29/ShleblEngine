@@ -17,13 +17,20 @@ public:
 		DirectX::SimpleMath::Matrix worldViewProj;
 		DirectX::SimpleMath::Matrix invTrWorld;
 		float isSpinningFloor;
-		float padding[3]; // Align to 64 bytes
+		//float padding[3]; // Align to 64 bytes
+		DirectX::SimpleMath::Vector3 diffuseColor;
+		DirectX::SimpleMath::Vector3 specularColor;
+		float shininess;
 	};
 	struct CBDataPerScene
 	{
-		DirectX::SimpleMath::Vector4 lightPos;
-		DirectX::SimpleMath::Vector4 lightColorAmbStr;
-		DirectX::SimpleMath::Vector4 viewDirSpecStr;
+		//DirectX::SimpleMath::Vector4 lightPos;
+		//DirectX::SimpleMath::Vector4 lightColorAmbStr;
+		//DirectX::SimpleMath::Vector4 viewDirSpecStr;
+		DirectX::SimpleMath::Vector4 lightDir;
+		DirectX::SimpleMath::Vector4 lightColor;
+		DirectX::SimpleMath::Vector4 ambientStrength;
+		DirectX::SimpleMath::Vector4 viewPos;
 		float gTime;
 		float padding[3]; // Align to 64 bytes
 	};
@@ -54,4 +61,7 @@ public:
 	void Initialize() override;
 	void Update() override;
 	float isSpinningFloor = 0.0f;
+	DirectX::SimpleMath::Vector3 diffuseColor = { 1.0f, 1.0f, 1.0f };  // Default white
+	DirectX::SimpleMath::Vector3 specularColor = { 1.0f, 1.0f, 1.0f }; // Default white
+	float shininess = 32.0f; // Default shininess
 };

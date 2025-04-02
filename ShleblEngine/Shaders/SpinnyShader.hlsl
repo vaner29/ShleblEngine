@@ -10,8 +10,9 @@ struct VS_IN
 struct PS_IN
 {
     float4 pos : SV_POSITION;
-    float4 tex : TEXCOORD;
+    float4 tex : TEXCOORD0;
     float4 normal : NORMAL;
+    float4 worldPos : TEXCOORD1; // Add world position for lighting
 };
 
 cbuffer cbPerObject : register(b0)
@@ -19,14 +20,18 @@ cbuffer cbPerObject : register(b0)
     float4x4 gWorldViewProj;
     float4x4 gInvTrWorld;
     float isSpinningFloor;
-    float3 padding;
+    float3 diffuseColor; // Material diffuse color
+    float3 specularColor; // Material specular color
+    float shininess; // Specular shininess
+    float padding; // Align to 16 bytes
 };
 
 cbuffer cbPerScene : register(b1)
 {
-    float4 lightDir;
-    float4 lightColorAmbStr;
-    float4 viewDirSpecStr;
+    float4 lightDir; // Directional light direction
+    float4 lightColor; // Light color (RGB) and intensity (A)
+    float4 ambientStrength; // Ambient strength (xyz unused, w = strength)
+    float4 viewPos; // Camera position in world space
     float gTime;
     float3 padding2;
 };
@@ -45,6 +50,7 @@ PS_IN VSMain(VS_IN input)
 #endif
     output.tex = input.tex;
     output.normal = mul(float4(input.normal.xyz, 0.0f), gInvTrWorld);
+    output.worldPos = mul(float4(input.pos.xyz, 1.0f), gInvTrWorld); // Transform to world space
     
     return output;
 }
@@ -58,34 +64,25 @@ float4 PSMain(PS_IN input) : SV_Target
     float4 objColor;
     if (isSpinningFloor > 0.5f)
     {
-        // Extract tile and local coordinates
         float2 texCoord = input.tex.xy;
         float2 tileCoord = floor(texCoord);
         float2 localCoord = frac(texCoord);
         float2 centeredCoord = localCoord - 0.5f;
 
-        // Determine rotation direction based on tile position (checkerboard pattern)
         float tileSum = tileCoord.x + tileCoord.y;
-        bool isClockwise = fmod(tileSum, 2.0f) < 1.0f; // Even sum = clockwise, odd = counterclockwise
+        bool isClockwise = fmod(tileSum, 2.0f) < 1.0f;
 
-        // Rotation parameters
-        float spinSpeed = 1.0f; // Radians per second
+        float spinSpeed = 1.0f;
         float angle = gTime * spinSpeed;
         float cosA = cos(angle);
         float sinA = sin(angle);
 
-        // Rotation matrix: clockwise or counterclockwise
         float2x2 rotationMatrix;
         if (isClockwise)
-        {
-            rotationMatrix = float2x2(cosA, sinA, -sinA, cosA); // Clockwise
-        }
+            rotationMatrix = float2x2(cosA, sinA, -sinA, cosA);
         else
-        {
-            rotationMatrix = float2x2(cosA, -sinA, sinA, cosA); // Counterclockwise
-        }
+            rotationMatrix = float2x2(cosA, -sinA, sinA, cosA);
 
-        // Apply rotation and recombine
         float2 rotatedCoord = mul(centeredCoord, rotationMatrix);
         float2 finalCoord = tileCoord + (rotatedCoord + 0.5f);
 
@@ -96,8 +93,25 @@ float4 PSMain(PS_IN input) : SV_Target
         objColor = DiffuseMap.SampleLevel(Sampler, input.tex.xy, 0);
     }
 
-    float4 ambient = lightColorAmbStr.w * float4(lightColorAmbStr.xyz, 1.0f);
-    float4 result = ambient * objColor;
+    // Normalize normal and light direction
+    float3 N = normalize(input.normal.xyz);
+    float3 L = normalize(-lightDir.xyz); // Negative because lightDir points toward light
+
+    // Ambient
+    float3 ambient = ambientStrength.w * lightColor.xyz;
+
+    // Diffuse
+    float diff = max(dot(N, L), 0.0f);
+    float3 diffuse = diff * lightColor.xyz * diffuseColor;
+
+    // Specular
+    float3 V = normalize(viewPos.xyz - input.worldPos.xyz); // View direction
+    float3 R = reflect(-L, N); // Reflection direction
+    float spec = pow(max(dot(R, V), 0.0f), shininess);
+    float3 specular = spec * lightColor.xyz * specularColor;
+
+    // Combine lighting components
+    float3 result = (ambient + diffuse + specular) * objColor.xyz;
     
-    return float4(result.xyz, 1.0f);
+    return float4(result, 1.0f);
 }

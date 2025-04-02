@@ -186,14 +186,21 @@ void BaseComponent::Update()
 	objData.worldViewProj = world * game->Camera->GetMatrix();
 	objData.invTrWorld = (Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation)).Invert().Transpose();
 	objData.isSpinningFloor = this->isSpinningFloor;
+	objData.diffuseColor = this->diffuseColor;
+	objData.specularColor = this->specularColor;
+	objData.shininess = this->shininess;
 
 	CBDataPerScene sceneData = {};
-	sceneData.lightPos = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
-	sceneData.lightColorAmbStr = Vector4(1.0f, 1.0f, 1.0f, 0.4f);
-	sceneData.viewDirSpecStr = Vector4(game->Camera->Position.x - game->Camera->Target.x, game->Camera->Position.y - game->Camera->Target.y, game->Camera->Position.z - game->Camera->Target.z, 0.0f);
-	sceneData.viewDirSpecStr.Normalize();
-	sceneData.viewDirSpecStr.w = 0.5f;
-	sceneData.lightPos.Normalize();
+	//sceneData.lightPos = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
+	//sceneData.lightColorAmbStr = Vector4(1.0f, 1.0f, 1.0f, 0.4f);
+	//sceneData.viewDirSpecStr = Vector4(game->Camera->Position.x - game->Camera->Target.x, game->Camera->Position.y - game->Camera->Target.y, game->Camera->Position.z - game->Camera->Target.z, 0.0f);
+	//sceneData.viewDirSpecStr.Normalize();
+	//sceneData.viewDirSpecStr.w = 0.5f;
+	//sceneData.lightPos.Normalize();
+	sceneData.lightDir = Vector4(1.0f, -1.0f, 0.0f, 0.0f); // Example: light from top-right
+	sceneData.lightColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f); // White light, full intensity
+	sceneData.ambientStrength = Vector4(0.0f, 0.0f, 0.0f, 0.2f); // 20% ambient
+	sceneData.viewPos = Vector4(game->Camera->Position.x, game->Camera->Position.y, game->Camera->Position.z, 1.0f);
 	sceneData.gTime = game->totalest_time_; // Use Game’s total_time_
 
 	game->context_->UpdateSubresource(const_buffers_[0], 0, nullptr, &objData, 0, 0);
