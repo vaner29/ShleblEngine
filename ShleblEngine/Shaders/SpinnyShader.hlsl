@@ -12,26 +12,31 @@ struct PS_IN
     float4 pos : SV_POSITION;
     float4 tex : TEXCOORD0;
     float4 normal : NORMAL;
-    float4 worldPos : TEXCOORD1; // Add world position for lighting
+    float4 worldPos : TEXCOORD1;
 };
 
 cbuffer cbPerObject : register(b0)
 {
     float4x4 gWorldViewProj;
     float4x4 gInvTrWorld;
+    float4x4 gWorld;
     float isSpinningFloor;
-    float3 diffuseColor; // Material diffuse color
-    float3 specularColor; // Material specular color
-    float shininess; // Specular shininess
-    float padding; // Align to 16 bytes
+    float3 diffuseColor;
+    float3 specularColor;
+    float shininess;
+    struct
+    {
+        float4 position;
+        float4 color;
+    } pointLights[10];
+    int numPointLights;
+    float3 padding;
 };
 
 cbuffer cbPerScene : register(b1)
 {
-    float4 lightDir; // Directional light direction
-    float4 lightColor; // Light color (RGB) and intensity (A)
-    float4 ambientStrength; // Ambient strength (xyz unused, w = strength)
-    float4 viewPos; // Camera position in world space
+    float4 ambientStrength;
+    float4 viewPos;
     float gTime;
     float3 padding2;
 };
@@ -50,7 +55,7 @@ PS_IN VSMain(VS_IN input)
 #endif
     output.tex = input.tex;
     output.normal = mul(float4(input.normal.xyz, 0.0f), gInvTrWorld);
-    output.worldPos = mul(float4(input.pos.xyz, 1.0f), gInvTrWorld); // Transform to world space
+    output.worldPos = mul(float4(input.pos.xyz, 1.0f), gWorld);
     
     return output;
 }
@@ -93,25 +98,31 @@ float4 PSMain(PS_IN input) : SV_Target
         objColor = DiffuseMap.SampleLevel(Sampler, input.tex.xy, 0);
     }
 
-    // Normalize normal and light direction
     float3 N = normalize(input.normal.xyz);
-    float3 L = normalize(-lightDir.xyz); // Negative because lightDir points toward light
+    float3 V = normalize(viewPos.xyz - input.worldPos.xyz);
+    float3 lighting = ambientStrength.w * float3(1.0f, 1.0f, 1.0f); // White ambient
 
-    // Ambient
-    float3 ambient = ambientStrength.w * lightColor.xyz;
+    const float radius = 100.0f;
+    for (int i = 0; i < numPointLights; i++)
+    {
+        float3 lightVec = pointLights[i].position.xyz - input.worldPos.xyz;
+        float distance = length(lightVec);
+        if (distance < radius)
+        {
+            float3 L = normalize(lightVec);
+            float attenuation = 1.0f - (distance / radius);
 
-    // Diffuse
-    float diff = max(dot(N, L), 0.0f);
-    float3 diffuse = diff * lightColor.xyz * diffuseColor;
+            float diff = max(dot(N, L), 0.0f);
+            float3 diffuse = diff * pointLights[i].color.xyz * diffuseColor * attenuation;
 
-    // Specular
-    float3 V = normalize(viewPos.xyz - input.worldPos.xyz); // View direction
-    float3 R = reflect(-L, N); // Reflection direction
-    float spec = pow(max(dot(R, V), 0.0f), shininess);
-    float3 specular = spec * lightColor.xyz * specularColor;
+            float3 R = reflect(-L, N);
+            float spec = pow(max(dot(R, V), 0.0f), shininess);
+            float3 specular = spec * pointLights[i].color.xyz * specularColor * attenuation;
 
-    // Combine lighting components
-    float3 result = (ambient + diffuse + specular) * objColor.xyz;
-    
+            lighting += diffuse + specular;
+        }
+    }
+
+    float3 result = lighting * objColor.xyz;
     return float4(result, 1.0f);
 }

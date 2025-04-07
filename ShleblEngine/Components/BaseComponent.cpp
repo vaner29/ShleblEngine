@@ -2,6 +2,7 @@
 #include "Game.h"
 #include "../Dependencies/DDSTextureLoader.h"
 #include "../Tools/DataProcesser.h"
+#include "../KatamariComponents/KatamariGame.h"
 
 using namespace DirectX;
 using namespace SimpleMath;
@@ -184,24 +185,42 @@ void BaseComponent::Update()
 
 	CBDataPerObject objData = {};
 	objData.worldViewProj = world * game->Camera->GetMatrix();
-	objData.invTrWorld = (Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation)).Invert().Transpose();
+	objData.invTrWorld = objData.invTrWorld = (isSpinningFloor > 0.5f) ? Matrix::Identity : (Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation)).Invert().Transpose();
+	objData.world = world; // Set world matrix
 	objData.isSpinningFloor = this->isSpinningFloor;
 	objData.diffuseColor = this->diffuseColor;
 	objData.specularColor = this->specularColor;
 	objData.shininess = this->shininess;
 
+	KatamariGame* kgame = dynamic_cast<KatamariGame*>(game);
+	// Find closest 4 lights
+	std::vector<std::pair<float, size_t>> distances;
+	Vector3 objPos = GetPosition();
+	for (size_t i = 0; i < kgame->pointLights.size(); i++) {
+		if (kgame->pointLights[i].active) {
+			float dist = (kgame->pointLights[i].position - objPos).Length();
+			if (dist < 100.0f) { // Only consider lights within radius
+				distances.push_back({ dist, i });
+			}
+		}
+	}
+	std::sort(distances.begin(), distances.end()); // Sort by distance
+
+	objData.numPointLights = std::min(int(distances.size()), 10);
+	for (int i = 0; i < objData.numPointLights; i++) {
+		const auto& light = kgame->pointLights[distances[i].second];
+		objData.pointLights[i].position = Vector4(light.position.x, light.position.y, light.position.z, 1.0f);
+		objData.pointLights[i].color = Vector4(light.color.x, light.color.y, light.color.z, light.intensity);
+	}
+
+
 	CBDataPerScene sceneData = {};
-	//sceneData.lightPos = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
-	//sceneData.lightColorAmbStr = Vector4(1.0f, 1.0f, 1.0f, 0.4f);
-	//sceneData.viewDirSpecStr = Vector4(game->Camera->Position.x - game->Camera->Target.x, game->Camera->Position.y - game->Camera->Target.y, game->Camera->Position.z - game->Camera->Target.z, 0.0f);
-	//sceneData.viewDirSpecStr.Normalize();
-	//sceneData.viewDirSpecStr.w = 0.5f;
-	//sceneData.lightPos.Normalize();
-	sceneData.lightDir = Vector4(1.0f, -1.0f, 0.0f, 0.0f); // Example: light from top-right
-	sceneData.lightColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f); // White light, full intensity
-	sceneData.ambientStrength = Vector4(0.0f, 0.0f, 0.0f, 0.2f); // 20% ambient
+	//sceneData.lightPos = Vector4(0.0f, 5.0f, 0.0f, 1.0f); // Point light at (0, 1, 10)
+	//sceneData.lightColor = Vector4(1.0f, 0.5f, 0.0f, 1.0f); // White light, full intensity
+	sceneData.ambientStrength = Vector4(0.0f, 0.0f, 0.0f, 0.2f); // 20% ambient strength
 	sceneData.viewPos = Vector4(game->Camera->Position.x, game->Camera->Position.y, game->Camera->Position.z, 1.0f);
-	sceneData.gTime = game->totalest_time_; // Use Game’s total_time_
+	//sceneData.radius = 40.0f; // Light radius of 10 units
+	sceneData.gTime = game->totalest_time_;
 
 	game->context_->UpdateSubresource(const_buffers_[0], 0, nullptr, &objData, 0, 0);
 	game->context_->UpdateSubresource(const_buffers_[1], 0, nullptr, &sceneData, 0, 0);

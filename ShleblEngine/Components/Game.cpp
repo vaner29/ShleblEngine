@@ -231,7 +231,7 @@ void Game::SetBackgroundColor()
 	float redValue = (std::sin(2 * 3.14f * (total_time_ + 0.0f)) + 1) / 2;
 	float blueValue = (std::sin(2 * 3.14f * (total_time_ + 1.0f / 3.0f)) + 1) / 2;
 	float greenValue = (std::sin(2 * 3.14f * (total_time_ + 2.0f / 3.0f)) + 1) / 2;
-	float color[] = { redValue, blueValue, greenValue, 1.0f };
+	float color[] = { 0.0f,  0.0f,  0.0f, 1.0f };
 	context_->ClearRenderTargetView(render_view_, color);
 }
 

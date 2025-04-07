@@ -35,19 +35,24 @@ InputDevice::~InputDevice()
 void InputDevice::OnKeyDown(KeyboardInputEventArgs args)
 {
 	bool Break = args.Flags & 0x01;
-
 	auto key = static_cast<Keys>(args.VKey);
-
 	if (args.MakeCode == 42) key = Keys::LeftShift;
 	if (args.MakeCode == 54) key = Keys::RightShift;
 
 	if (Break) {
-		if (keys->count(key))	RemovePressedKey(key);
+		if (keys->count(key)) {
+			RemovePressedKey(key);
+			KeyReleased.Broadcast(key);
+		}
 	}
 	else {
-		if (!keys->count(key))	AddPressedKey(key);
+		if (!keys->count(key)) {
+			AddPressedKey(key);
+			KeyPressed.Broadcast(key);
+		}
 	}
 }
+
 
 void InputDevice::OnMouseMove(RawMouseEventArgs args)
 {

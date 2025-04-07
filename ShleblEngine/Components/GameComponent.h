@@ -8,10 +8,10 @@ class GameComponent
 {
 protected:
 	Game* game;
+public:
 	DirectX::SimpleMath::Vector3 position;
 	DirectX::SimpleMath::Quaternion rotation;
 	DirectX::SimpleMath::Vector3 scale;
-public:
 	virtual void SetPosition(DirectX::SimpleMath::Vector3 p) { position = p; }
 	virtual void SetRotation(DirectX::SimpleMath::Quaternion q) { rotation = q; }
 	virtual void SetScale(DirectX::SimpleMath::Vector3 s) { scale = s; }
