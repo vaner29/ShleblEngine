@@ -8,7 +8,7 @@ using namespace DirectX;
 using namespace SimpleMath;
 
 BaseComponent::BaseComponent(Game* g) : GameComponent(g), layout_(nullptr), vertex_buffer_(nullptr), index_buffer_(nullptr),
-	const_buffers_(new ID3D11Buffer* [2]), strides{}, offsets{}, passThroughVS(false), colorModePS(false),
+	strides{}, offsets{}, passThroughVS(false), colorModePS(false),
 	topologyType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST), textureFileName_(L"Textures/wood.dds")
 {
 
@@ -48,6 +48,9 @@ void BaseComponent::Draw()
 	game->context_->IASetPrimitiveTopology(topologyType);
 	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
+	ID3D11Buffer** const_buffers_ = new ID3D11Buffer * [2];
+	const_buffers_[0] = objConstantBuffer;
+	const_buffers_[1] = game->sceneConstantBuffer;
 	game->context_->VSSetConstantBuffers(0, 2, const_buffers_);
 	game->context_->PSSetConstantBuffers(0, 2, const_buffers_);
 	ID3D11ShaderResourceView* test = DataProcesser::GetTextureView(textureFileName_);
@@ -146,17 +149,7 @@ void BaseComponent::Initialize()
 	constBufPerObjDesc.StructureByteStride = 0;
 	constBufPerObjDesc.ByteWidth = sizeof(CBDataPerObject);
 
-	game->device_->CreateBuffer(&constBufPerObjDesc, nullptr, &const_buffers_[0]);
-
-	D3D11_BUFFER_DESC constBufPerSceneDesc = {};
-	constBufPerSceneDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	constBufPerSceneDesc.Usage = D3D11_USAGE_DEFAULT;
-	constBufPerSceneDesc.CPUAccessFlags = 0;
-	constBufPerSceneDesc.MiscFlags = 0;
-	constBufPerSceneDesc.StructureByteStride = 0;
-	constBufPerSceneDesc.ByteWidth = sizeof(CBDataPerScene);
-
-	game->device_->CreateBuffer(&constBufPerSceneDesc, nullptr, &const_buffers_[1]);
+	game->device_->CreateBuffer(&constBufPerObjDesc, nullptr, &objConstantBuffer);
 
 	/*auto res = CreateDDSTextureFromFile(game->Device.Get(), textureFileName, &diffuseTextureBuffer, &diffuseTextureView);
 	game->Context->GenerateMips(diffuseTextureView);*/
@@ -206,22 +199,13 @@ void BaseComponent::Update()
 	}
 	std::sort(distances.begin(), distances.end()); // Sort by distance
 
-	objData.numPointLights = std::min(int(distances.size()), 10);
+	objData.numPointLights = std::min(int(distances.size()), 4);
 	for (int i = 0; i < objData.numPointLights; i++) {
 		const auto& light = kgame->pointLights[distances[i].second];
 		objData.pointLights[i].position = Vector4(light.position.x, light.position.y, light.position.z, 1.0f);
 		objData.pointLights[i].color = Vector4(light.color.x, light.color.y, light.color.z, light.intensity);
 	}
 
+	game->context_->UpdateSubresource(objConstantBuffer, 0, nullptr, &objData, 0, 0);
 
-	CBDataPerScene sceneData = {};
-	//sceneData.lightPos = Vector4(0.0f, 5.0f, 0.0f, 1.0f); // Point light at (0, 1, 10)
-	//sceneData.lightColor = Vector4(1.0f, 0.5f, 0.0f, 1.0f); // White light, full intensity
-	sceneData.ambientStrength = Vector4(0.0f, 0.0f, 0.0f, 0.2f); // 20% ambient strength
-	sceneData.viewPos = Vector4(game->Camera->Position.x, game->Camera->Position.y, game->Camera->Position.z, 1.0f);
-	//sceneData.radius = 40.0f; // Light radius of 10 units
-	sceneData.gTime = game->totalest_time_;
-
-	game->context_->UpdateSubresource(const_buffers_[0], 0, nullptr, &objData, 0, 0);
-	game->context_->UpdateSubresource(const_buffers_[1], 0, nullptr, &sceneData, 0, 0);
 }

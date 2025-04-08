@@ -26,19 +26,9 @@ public:
 		DirectX::SimpleMath::Vector3 diffuseColor;
 		DirectX::SimpleMath::Vector3 specularColor;
 		float shininess;
-		PointLightData pointLights[10]; // Up to 4 closest lights
+		PointLightData pointLights[4]; // Up to 4 closest lights
 		int numPointLights;            // Number of active lights (0-4)
 		float padding[3];              // Align to 256 bytes
-	};
-	struct CBDataPerScene
-	{
-		//DirectX::SimpleMath::Vector4 lightPos;    // Point light position (x, y, z, w=1.0)
-		//DirectX::SimpleMath::Vector4 lightColor;  // Light color (RGB) and intensity (A)
-		DirectX::SimpleMath::Vector4 ambientStrength; // Ambient strength (xyz unused, w = strength)
-		DirectX::SimpleMath::Vector4 viewPos;     // Camera position in world space
-		//float radius;                             // Light radius (attenuation distance)
-		float gTime;                              // Game time for animations
-		float padding[3];                         // Align to 16-byte boundary
 	};
 protected:
 	ID3D11InputLayout* layout_;
@@ -55,7 +45,7 @@ protected:
 	std::vector<UINT> indices_ = { 0, 1, 2 };
 	D3D_PRIMITIVE_TOPOLOGY topologyType;
 public:
-	ID3D11Buffer** const_buffers_;
+	ID3D11Buffer* objConstantBuffer = nullptr;
 	bool passThroughVS;
 	bool colorModePS;
 	const wchar_t* textureFileName_;

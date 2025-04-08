@@ -19,4 +19,5 @@ public:
     Camera();
     void UpdateMatrix();
     DirectX::SimpleMath::Matrix GetMatrix() const;
+    DirectX::SimpleMath::Matrix GetViewMatrix() const;
 };

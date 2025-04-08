@@ -28,7 +28,7 @@ cbuffer cbPerObject : register(b0)
     {
         float4 position;
         float4 color;
-    } pointLights[10];
+    } pointLights[4];
     int numPointLights;
     float3 padding;
 };

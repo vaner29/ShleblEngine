@@ -198,6 +198,12 @@ void Game::Run()
 
 		Update();
 
+		CBDataPerScene sceneData = {};
+		sceneData.ambientStrength = DirectX::SimpleMath::Vector4(0.0f, 0.0f, 0.0f, 0.2f); // 20% ambient strength
+		sceneData.viewPos = DirectX::SimpleMath::Vector4(this->Camera->Position.x, this->Camera->Position.y, this->Camera->Position.z, 1.0f);
+		sceneData.gTime = this->totalest_time_;
+		this->context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData, 0, 0);
+
 		PrepareFrame();
 
 		Draw();
@@ -356,56 +362,14 @@ void Game::PrepareResources()
 
 	context_->RSSetState(rast_state_);
 
+	D3D11_BUFFER_DESC constBufPerSceneDesc = {};
+	constBufPerSceneDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	constBufPerSceneDesc.Usage = D3D11_USAGE_DEFAULT;
+	constBufPerSceneDesc.CPUAccessFlags = 0;
+	constBufPerSceneDesc.MiscFlags = 0;
+	constBufPerSceneDesc.StructureByteStride = 0;
+	constBufPerSceneDesc.ByteWidth = sizeof(CBDataPerScene);
 
-	//ID3DBlob* errorVertexCode = nullptr;
-	//auto resShader = D3DCompileFromFile(L"./Shaders/Base3dShader.hlsl",
-	//	nullptr /*macros*/,
-	//	nullptr /*include*/,
-	//	"VSMain",
-	//	"vs_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&vertex_shader_byte_code_,
-	//	&errorVertexCode);
-
-	//if (FAILED(resShader)) {
-	//	// If the shader failed to compile it should have written something to the error message.
-	//	if (errorVertexCode) {
-	//		char* compileErrors = (char*)(errorVertexCode->GetBufferPointer());
-
-	//		std::cout << compileErrors << std::endl;
-	//	}
-	//	// If there was  nothing in the error message then it simply could not find the shader file itself.
-	//	else
-	//	{
-	//		MessageBox(display_->hwnd_, L"Base3dShader.hlsl", L"Missing Shader File", MB_OK);
-	//	}
-
-	//	return;
-	//}
-
-	////D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr };
-
-	//ID3DBlob* errorPixelCode;
-	//resShader = D3DCompileFromFile(L"./Shaders/Base3dShader.hlsl",
-	//	nullptr /*macros*/,
-	//	nullptr /*include*/,
-	//	"PSMain",
-	//	"ps_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&pixel_shader_byte_code_,
-	//	&errorPixelCode);
-
-	//device_->CreateVertexShader(
-	//	vertex_shader_byte_code_->GetBufferPointer(),
-	//	vertex_shader_byte_code_->GetBufferSize(),
-	//	nullptr, &vertex_shader_);
-
-	//device_->CreatePixelShader(
-	//	pixel_shader_byte_code_->GetBufferPointer(),
-	//	pixel_shader_byte_code_->GetBufferSize(),
-	//	nullptr, &pixel_shader_);
-
+	device_->CreateBuffer(&constBufPerSceneDesc, nullptr, &sceneConstantBuffer);
 }
 

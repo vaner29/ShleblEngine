@@ -178,6 +178,50 @@ void KatamariGame::Initialize()
             ShootPointLight();
         }
         });
+
+    // Initialize shadow map texture array
+    D3D11_TEXTURE2D_DESC shadowTexDesc = {};
+    shadowTexDesc.Width = ShadowMapSize;
+    shadowTexDesc.Height = ShadowMapSize;
+    shadowTexDesc.MipLevels = 1;
+    shadowTexDesc.ArraySize = NumCascades * 4; // 4 lights, 4 cascades each
+    shadowTexDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+    shadowTexDesc.SampleDesc.Count = 1;
+    shadowTexDesc.SampleDesc.Quality = 0;
+    shadowTexDesc.Usage = D3D11_USAGE_DEFAULT;
+    shadowTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+    shadowTexDesc.CPUAccessFlags = 0;
+    shadowTexDesc.MiscFlags = 0;
+    device_->CreateTexture2D(&shadowTexDesc, nullptr, &shadowMapTexture);
+
+    // Create DSVs for each cascade (for first 4 lights)
+    D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+    dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+    dsvDesc.Texture2DArray.MipSlice = 0;
+    dsvDesc.Texture2DArray.ArraySize = 1; // One slice per DSV
+    for (int i = 0; i < NumCascades; i++) {
+        dsvDesc.Texture2DArray.FirstArraySlice = i; // Each cascade gets its own slice
+        device_->CreateDepthStencilView(shadowMapTexture, &dsvDesc, &shadowMapDSVs[i]);
+    }
+
+    // Create SRV for the entire texture array
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+    srvDesc.Texture2DArray.MostDetailedMip = 0;
+    srvDesc.Texture2DArray.MipLevels = 1;
+    srvDesc.Texture2DArray.FirstArraySlice = 0;
+    srvDesc.Texture2DArray.ArraySize = NumCascades * 4;
+    device_->CreateShaderResourceView(shadowMapTexture, &srvDesc, &shadowMapSRV);
+
+    // Depth stencil state for shadow rendering
+    D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+    dsDesc.DepthEnable = TRUE;
+    dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+    device_->CreateDepthStencilState(&dsDesc, &shadowDepthState);
+
     Game::Initialize();
 }
 
@@ -240,11 +284,109 @@ void KatamariGame::UpdateObjectLights(GameComponent* obj)
         objData.pointLights[i].color = Vector4(light.color.x, light.color.y, light.color.z, light.intensity);
     }
 
-    BaseComponent::CBDataPerScene sceneData = {};
-    sceneData.ambientStrength = Vector4(0.0f, 0.0f, 0.0f, 0.2f); // 20% ambient strength
-    sceneData.viewPos = Vector4(this->Camera->Position.x, this->Camera->Position.y, this->Camera->Position.z, 1.0f);
-    sceneData.gTime = this->totalest_time_;
+    this->context_->UpdateSubresource(baseComponent->objConstantBuffer, 0, nullptr, &objData, 0, 0);
+}
 
-    this->context_->UpdateSubresource(baseComponent->const_buffers_[0], 0, nullptr, &objData, 0, 0);
-    this->context_->UpdateSubresource(baseComponent->const_buffers_[1], 0, nullptr, &sceneData, 0, 0);
+void KatamariGame::RenderShadowMaps()
+{
+    // Use shadow-specific shaders
+    context_->VSSetShader(DataProcesser::GetVertexShader("shadow"), nullptr, 0);
+    context_->PSSetShader(nullptr, nullptr, 0); // No pixel shader for depth-only
+
+    context_->OMSetDepthStencilState(shadowDepthState, 0);
+    context_->RSSetState(rast_state_);
+
+    // Define cascade splits (in view space depth)
+    float nearClip = 0.1f;
+    float farClip = 50.0f;
+    float cascadeSplits[NumCascades] = { farClip * 0.05f, farClip * 0.15f, farClip * 0.5f, farClip };
+
+    // Find first active light (for simplicity, extend to multiple later)
+    int lightIndex = -1;
+    for (size_t i = 0; i < pointLights.size(); i++) {
+        if (pointLights[i].active) {
+            lightIndex = i;
+            break;
+        }
+    }
+    if (lightIndex == -1) return;
+
+    PointLight& light = pointLights[lightIndex];
+    Vector3 lightPos = light.position;
+    Vector3 lightDir = -Vector3::Up; // Simplified; adjust based on light movement
+    Vector3 up = Vector3::Forward;
+
+    for (int i = 0; i < NumCascades; i++) {
+        // Define frustum corners for this cascade
+        float nearZ = (i == 0) ? nearClip : cascadeSplits[i - 1];
+        float farZ = cascadeSplits[i];
+        Matrix view = Camera->GetViewMatrix();
+        Matrix proj = Matrix::CreatePerspectiveFieldOfView(XM_PIDIV4, Camera->AspectRatio, nearZ, farZ);
+        Matrix viewProj = view * proj;
+
+        // Get frustum corners in world space
+        Vector3 corners[8];
+        float zNear = -nearZ, zFar = -farZ;
+        float tanHalfFOV = tan(XM_PIDIV4 / 2.0f);
+        float aspect = Camera->AspectRatio;
+        float nearHeight = tanHalfFOV * nearZ;
+        float nearWidth = nearHeight * aspect;
+        float farHeight = tanHalfFOV * farZ;
+        float farWidth = farHeight * aspect;
+
+        corners[0] = Vector3(-nearWidth, nearHeight, zNear); // Near top-left
+        corners[1] = Vector3(nearWidth, nearHeight, zNear);  // Near top-right
+        corners[2] = Vector3(-nearWidth, -nearHeight, zNear); // Near bottom-left
+        corners[3] = Vector3(nearWidth, -nearHeight, zNear);  // Near bottom-right
+        corners[4] = Vector3(-farWidth, farHeight, zFar);     // Far top-left
+        corners[5] = Vector3(farWidth, farHeight, zFar);      // Far top-right
+        corners[6] = Vector3(-farWidth, -farHeight, zFar);    // Far bottom-left
+        corners[7] = Vector3(farWidth, -farHeight, zFar);     // Far bottom-right
+
+        Matrix invViewProj = viewProj.Invert();
+        for (auto& corner : corners) {
+            Vector4 transformed = Vector4::Transform(Vector4(corner.x, corner.y, corner.z, 1.0f), invViewProj);
+            transformed /= transformed.w;
+            corner = Vector3(transformed.x, transformed.y, transformed.z);
+        }
+
+        // Compute light view frustum
+        Vector3 center = Vector3::Zero;
+        for (const auto& corner : corners) center += corner;
+        center /= 8.0f;
+        Vector3 lightLookAt = center;
+        Matrix lightView = Matrix::CreateLookAt(lightPos, lightLookAt, up);
+
+        // Orthographic projection bounds
+        float minX = FLT_MAX, maxX = -FLT_MAX, minY = FLT_MAX, maxY = -FLT_MAX, minZ = FLT_MAX, maxZ = -FLT_MAX;
+        for (const auto& corner : corners) {
+            Vector3 lightSpace = Vector3::Transform(corner, lightView);
+            minX = std::min(minX, lightSpace.x); maxX = max(maxX, lightSpace.x);
+            minY = std::min(minY, lightSpace.y); maxY = max(maxY, lightSpace.y);
+            minZ = std::min(minZ, lightSpace.z); maxZ = max(maxZ, lightSpace.z);
+        }
+        Matrix lightProj = Matrix::CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ, -minZ);
+        light.lightViewProj[i] = lightView * lightProj;
+
+        // Render to shadow map
+        context_->OMSetRenderTargets(0, nullptr, shadowMapDSVs[i]);
+        context_->ClearDepthStencilView(shadowMapDSVs[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
+        D3D11_VIEWPORT viewport = { 0, 0, (float)ShadowMapSize, (float)ShadowMapSize, 0.0f, 1.0f };
+        context_->RSSetViewports(1, &viewport);
+
+        for (auto* comp : components_) {
+            comp->Update(); // Use light's view-proj in shadow pass
+            comp->Draw();
+        }
+    }
+
+    // Update CBDataPerScene with cascade splits
+    CBDataPerScene sceneData = {};
+    sceneData.ambientStrength = Vector4(0.0f, 0.0f, 0.0f, 0.2f);
+    sceneData.viewPos = Vector4(Camera->Position.x, Camera->Position.y, Camera->Position.z, 1.0f);
+    sceneData.gTime = totalest_time_;
+    for (int i = 0; i < NumCascades; i++) {
+        sceneData.cascadeSplits[i] = cascadeSplits[i];
+    }
+    context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData, 0, 0);
 }

@@ -32,3 +32,8 @@ Matrix Camera::GetMatrix() const
 {
     return viewProj;
 }
+
+Matrix Camera::GetViewMatrix() const
+{
+    return Matrix::CreateLookAt(Position, Target, Up);
+}

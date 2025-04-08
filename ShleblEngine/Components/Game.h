@@ -42,6 +42,14 @@ protected:
 	virtual void Update();
 	virtual void UpdateInternal();
 public:
+	struct CBDataPerScene
+	{
+		DirectX::SimpleMath::Vector4 ambientStrength; // Ambient strength (xyz unused, w = strength)
+		DirectX::SimpleMath::Vector4 viewPos;     // Camera position in world space
+		float gTime;                              // Game time for animations
+		float cascadeSplits[4];
+		float padding[3];                         // Align to 16-byte boundary
+	};
 	ID3D11Texture2D* depth_stencil_buffer_;
 	ID3D11DepthStencilView* depth_stencil_view_;
 	Camera* Camera;
@@ -51,6 +59,7 @@ public:
 	ID3D11PixelShader* pixel_shader_;
 	ID3DBlob* pixel_shader_byte_code_;
 	ID3D11Texture2D* back_buffer_;
+	ID3D11Buffer* sceneConstantBuffer = nullptr;
 	ID3D11DeviceContext* context_;
 	//int debug_annotation_;
 	Microsoft::WRL::ComPtr<ID3D11Device> device_;
