@@ -133,6 +133,7 @@
     <ClCompile Include="Components\ObjectComponent.cpp" />
     <ClCompile Include="Dependencies\DDSTextureLoader.cpp" />
     <ClCompile Include="Dependencies\DirectXHelpers.cpp" />
+    <ClCompile Include="Components\DirectionalLight.cpp" />
     <ClCompile Include="KatamariComponents\KatamariGame.cpp" />
     <ClCompile Include="KatamariComponents\KatamariBall.cpp" />
     <ClCompile Include="KatamariComponents\KatamariTrash.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="Dependencies\LoaderHelpers.h" />
     <ClInclude Include="Dependencies\DirectXHelpers.h" />
     <ClInclude Include="Dependencies\Effects.h" />
+    <ClInclude Include="Components\DirectionalLight.h" />
     <ClInclude Include="KatamariComponents\KatamariGame.h" />
     <ClInclude Include="KatamariComponents\KatamariBall.h" />
     <ClInclude Include="KatamariComponents\KatamariTrash.h" />

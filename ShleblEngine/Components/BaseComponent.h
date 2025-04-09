@@ -22,13 +22,19 @@ public:
 		DirectX::SimpleMath::Matrix worldViewProj;
 		DirectX::SimpleMath::Matrix invTrWorld;
 		DirectX::SimpleMath::Matrix world;
+		DirectX::SimpleMath::Matrix WorldView;
 		float isSpinningFloor;
 		DirectX::SimpleMath::Vector3 diffuseColor;
 		DirectX::SimpleMath::Vector3 specularColor;
 		float shininess;
-		PointLightData pointLights[4]; // Up to 4 closest lights
+		PointLightData pointLights[10]; // Up to 4 closest lights
 		int numPointLights;            // Number of active lights (0-4)
 		float padding[3];              // Align to 256 bytes
+	};
+	struct CbDataCascade
+	{
+		DirectX::SimpleMath::Matrix ViewProj[5];
+		DirectX::SimpleMath::Vector4 Distance;
 	};
 protected:
 	ID3D11InputLayout* layout_;
@@ -36,22 +42,20 @@ protected:
 	ID3D11Buffer* index_buffer_;
 	UINT strides[1];
 	UINT offsets[1];
-	//std::vector<DirectX::XMFLOAT4> points_ = {
-	//DirectX::XMFLOAT4(0.5f, 0.5f, 0, 1.0f),	DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
-	//DirectX::XMFLOAT4(-0.5f, -0.5f, 0, 1.0f),	DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
-	//DirectX::XMFLOAT4(0.5f, -0.5f, 0, 1.0f),	DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)
-	//};
 	std::vector<Vertex> points_{};
 	std::vector<UINT> indices_ = { 0, 1, 2 };
 	D3D_PRIMITIVE_TOPOLOGY topologyType;
+	bool isShadowCasting_;
 public:
 	ID3D11Buffer* objConstantBuffer = nullptr;
+	ID3D11Buffer* cascadeConstantBuffer = nullptr;
 	bool passThroughVS;
 	bool colorModePS;
 	const wchar_t* textureFileName_;
 	BaseComponent(Game* g);
 	BaseComponent(Game* g, std::vector<Vertex> client_points, std::vector<UINT> client_indices);
 	~BaseComponent();
+	void PrepareFrame() override;
 	void DestroyResources() override;
 	void Draw() override;
 	void Initialize() override;

@@ -28,6 +28,11 @@ public:
         ID3D11PixelShader* Shader;
         ID3DBlob* Bc;
     };
+    struct GeometryShaderInfo
+    {
+        ID3D11GeometryShader* Shader;
+        ID3DBlob* Bc;
+    };
     struct GeometryInfo
     {
         std::vector<Vertex> Points{};
@@ -38,6 +43,7 @@ private:
     static Game* activeGame_;
     static std::unordered_map<std::string, VertexShaderInfo> vShaders_;
     static std::unordered_map<std::string, PixelShaderInfo> pShaders_;
+    static std::unordered_map<std::string, GeometryShaderInfo> gShaders_;
     static std::unordered_map<const wchar_t*, TextureInfo> textures_;
     static std::unordered_map<std::string, GeometryInfo> meshes_;
     static void LoadTexture(const wchar_t* name);
@@ -52,8 +58,10 @@ public:
     static ID3D11ShaderResourceView* GetTextureView(const wchar_t* name);
     static ID3D11VertexShader* GetVertexShader(std::string name);
     static ID3D11PixelShader* GetPixelShader(std::string name);
+    static ID3D11GeometryShader* GetGeometryShader(std::string name);
     static ID3DBlob* GetVertexShaderBC(std::string name);
     static ID3DBlob* GetPixelShaderBC(std::string name);
+    static ID3DBlob* GetGeometryShaderBC(std::string name);
     static const std::vector<Vertex>& GetPoints(std::string name);
     static const std::vector<UINT>& GetIndices(std::string name);
 };

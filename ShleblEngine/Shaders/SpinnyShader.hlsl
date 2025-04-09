@@ -12,6 +12,7 @@ struct PS_IN
     float4 pos : SV_POSITION;
     float4 tex : TEXCOORD0;
     float4 normal : NORMAL;
+    float4 viewPos : VIEWPOS;
     float4 worldPos : TEXCOORD1;
 };
 
@@ -28,7 +29,7 @@ cbuffer cbPerObject : register(b0)
     {
         float4 position;
         float4 color;
-    } pointLights[4];
+    } pointLights[10];
     int numPointLights;
     float3 padding;
 };

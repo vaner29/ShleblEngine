@@ -113,9 +113,11 @@ void KatamariGame::Update()
     std::cout << ball->GetPosition().x << " " << ball->GetPosition().y << " " << ball->GetPosition().z << " " << std::endl;
 
     //if (input_dev_->IsKeyDown(Keys::E)) ShootPointLight();
-    ball->Update();
-    for (auto object : furniture)
-        object->Update();
+    //ball->Update();
+    //for (auto object : furniture)
+        //object->Update();
+
+    Game::Update();
     // Update light positions
     for (size_t i = 0; i < pointLights.size(); i++) {
         auto& light = pointLights[i];
@@ -139,7 +141,7 @@ void KatamariGame::Update()
     for (auto* comp : components_) {
         UpdateObjectLights(comp);
     }
-    Camera->UpdateMatrix();
+    //Camera->UpdateMatrix();
 
    //Game::Update();
 }
@@ -154,13 +156,19 @@ void KatamariGame::PrepareFrame()
 
     context_->OMSetRenderTargets(1, &render_view_, depth_stencil_view_);
 
-    context_->VSSetShader(DataProcesser::GetVertexShader("spinny"), nullptr, 0);
-    context_->PSSetShader(DataProcesser::GetPixelShader("spinny"), nullptr, 0);
+    context_->VSSetShader(DataProcesser::GetVertexShader("base"), nullptr, 0);
+    context_->PSSetShader(DataProcesser::GetPixelShader("base"), nullptr, 0);
 
     context_->PSSetSamplers(0, 1, &sampler_state_);
+    context_->PSSetSamplers(1, 1, &depth_sampler_state_);
 
     SetBackgroundColor();
     context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+    for (const auto c : components_)
+    {
+        c->PrepareFrame();
+    }
 }
 
 void KatamariGame::Initialize()
@@ -253,9 +261,10 @@ void KatamariGame::UpdateObjectLights(GameComponent* obj)
     const Matrix world = Matrix::CreateScale(baseComponent->scale) * Matrix::CreateFromQuaternion(baseComponent->rotation) * Matrix::CreateTranslation(baseComponent->position);
 
     BaseComponent::CBDataPerObject objData = {};
-    objData.worldViewProj = world * this->Camera->GetMatrix();
+    objData.worldViewProj = world * Camera->GetMatrix();
     objData.invTrWorld = objData.invTrWorld = (baseComponent->isSpinningFloor > 0.5f) ? Matrix::Identity : (Matrix::CreateScale(baseComponent->scale) * Matrix::CreateFromQuaternion(baseComponent->rotation)).Invert().Transpose();
     objData.world = world; // Set world matrix
+    objData.WorldView = world * Camera->GetView();
     objData.isSpinningFloor = baseComponent->isSpinningFloor;
     objData.diffuseColor = baseComponent->diffuseColor;
     objData.specularColor = baseComponent->specularColor;
@@ -264,7 +273,7 @@ void KatamariGame::UpdateObjectLights(GameComponent* obj)
     //baseComponent->Update(); // Fill basic data
     //this->context_->UpdateSubresource(baseComponent->const_buffers_[0], 0, nullptr, &objData, 0, 0); // Get current data
 
-    // Find closest 4 lights
+    // Find closest 10 lights
     std::vector<std::pair<float, size_t>> distances;
     Vector3 objPos = baseComponent->GetPosition();
     for (size_t i = 0; i < pointLights.size(); i++) {
@@ -277,116 +286,21 @@ void KatamariGame::UpdateObjectLights(GameComponent* obj)
     }
     std::sort(distances.begin(), distances.end()); // Sort by distance
 
-    objData.numPointLights = std::min(int(distances.size()), 4);
+    objData.numPointLights = std::min(int(distances.size()), 10);
     for (int i = 0; i < objData.numPointLights; i++) {
         const auto& light = pointLights[distances[i].second];
         objData.pointLights[i].position = Vector4(light.position.x, light.position.y, light.position.z, 1.0f);
         objData.pointLights[i].color = Vector4(light.color.x, light.color.y, light.color.z, light.intensity);
     }
 
-    this->context_->UpdateSubresource(baseComponent->objConstantBuffer, 0, nullptr, &objData, 0, 0);
-}
-
-void KatamariGame::RenderShadowMaps()
-{
-    // Use shadow-specific shaders
-    context_->VSSetShader(DataProcesser::GetVertexShader("shadow"), nullptr, 0);
-    context_->PSSetShader(nullptr, nullptr, 0); // No pixel shader for depth-only
-
-    context_->OMSetDepthStencilState(shadowDepthState, 0);
-    context_->RSSetState(rast_state_);
-
-    // Define cascade splits (in view space depth)
-    float nearClip = 0.1f;
-    float farClip = 50.0f;
-    float cascadeSplits[NumCascades] = { farClip * 0.05f, farClip * 0.15f, farClip * 0.5f, farClip };
-
-    // Find first active light (for simplicity, extend to multiple later)
-    int lightIndex = -1;
-    for (size_t i = 0; i < pointLights.size(); i++) {
-        if (pointLights[i].active) {
-            lightIndex = i;
-            break;
-        }
+    BaseComponent::CbDataCascade cascadeData = {};
+    auto tmp = GetDLight()->GetLightSpaceMatrices();
+    for (int i = 0; i < 5; ++i)
+    {
+        cascadeData.ViewProj[i] = tmp[i];
     }
-    if (lightIndex == -1) return;
+    cascadeData.Distance = GetDLight()->GetShadowCascadeDistances();
 
-    PointLight& light = pointLights[lightIndex];
-    Vector3 lightPos = light.position;
-    Vector3 lightDir = -Vector3::Up; // Simplified; adjust based on light movement
-    Vector3 up = Vector3::Forward;
-
-    for (int i = 0; i < NumCascades; i++) {
-        // Define frustum corners for this cascade
-        float nearZ = (i == 0) ? nearClip : cascadeSplits[i - 1];
-        float farZ = cascadeSplits[i];
-        Matrix view = Camera->GetViewMatrix();
-        Matrix proj = Matrix::CreatePerspectiveFieldOfView(XM_PIDIV4, Camera->AspectRatio, nearZ, farZ);
-        Matrix viewProj = view * proj;
-
-        // Get frustum corners in world space
-        Vector3 corners[8];
-        float zNear = -nearZ, zFar = -farZ;
-        float tanHalfFOV = tan(XM_PIDIV4 / 2.0f);
-        float aspect = Camera->AspectRatio;
-        float nearHeight = tanHalfFOV * nearZ;
-        float nearWidth = nearHeight * aspect;
-        float farHeight = tanHalfFOV * farZ;
-        float farWidth = farHeight * aspect;
-
-        corners[0] = Vector3(-nearWidth, nearHeight, zNear); // Near top-left
-        corners[1] = Vector3(nearWidth, nearHeight, zNear);  // Near top-right
-        corners[2] = Vector3(-nearWidth, -nearHeight, zNear); // Near bottom-left
-        corners[3] = Vector3(nearWidth, -nearHeight, zNear);  // Near bottom-right
-        corners[4] = Vector3(-farWidth, farHeight, zFar);     // Far top-left
-        corners[5] = Vector3(farWidth, farHeight, zFar);      // Far top-right
-        corners[6] = Vector3(-farWidth, -farHeight, zFar);    // Far bottom-left
-        corners[7] = Vector3(farWidth, -farHeight, zFar);     // Far bottom-right
-
-        Matrix invViewProj = viewProj.Invert();
-        for (auto& corner : corners) {
-            Vector4 transformed = Vector4::Transform(Vector4(corner.x, corner.y, corner.z, 1.0f), invViewProj);
-            transformed /= transformed.w;
-            corner = Vector3(transformed.x, transformed.y, transformed.z);
-        }
-
-        // Compute light view frustum
-        Vector3 center = Vector3::Zero;
-        for (const auto& corner : corners) center += corner;
-        center /= 8.0f;
-        Vector3 lightLookAt = center;
-        Matrix lightView = Matrix::CreateLookAt(lightPos, lightLookAt, up);
-
-        // Orthographic projection bounds
-        float minX = FLT_MAX, maxX = -FLT_MAX, minY = FLT_MAX, maxY = -FLT_MAX, minZ = FLT_MAX, maxZ = -FLT_MAX;
-        for (const auto& corner : corners) {
-            Vector3 lightSpace = Vector3::Transform(corner, lightView);
-            minX = std::min(minX, lightSpace.x); maxX = max(maxX, lightSpace.x);
-            minY = std::min(minY, lightSpace.y); maxY = max(maxY, lightSpace.y);
-            minZ = std::min(minZ, lightSpace.z); maxZ = max(maxZ, lightSpace.z);
-        }
-        Matrix lightProj = Matrix::CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ, -minZ);
-        light.lightViewProj[i] = lightView * lightProj;
-
-        // Render to shadow map
-        context_->OMSetRenderTargets(0, nullptr, shadowMapDSVs[i]);
-        context_->ClearDepthStencilView(shadowMapDSVs[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
-        D3D11_VIEWPORT viewport = { 0, 0, (float)ShadowMapSize, (float)ShadowMapSize, 0.0f, 1.0f };
-        context_->RSSetViewports(1, &viewport);
-
-        for (auto* comp : components_) {
-            comp->Update(); // Use light's view-proj in shadow pass
-            comp->Draw();
-        }
-    }
-
-    // Update CBDataPerScene with cascade splits
-    CBDataPerScene sceneData = {};
-    sceneData.ambientStrength = Vector4(0.0f, 0.0f, 0.0f, 0.2f);
-    sceneData.viewPos = Vector4(Camera->Position.x, Camera->Position.y, Camera->Position.z, 1.0f);
-    sceneData.gTime = totalest_time_;
-    for (int i = 0; i < NumCascades; i++) {
-        sceneData.cascadeSplits[i] = cascadeSplits[i];
-    }
-    context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData, 0, 0);
+    context_->UpdateSubresource(baseComponent->objConstantBuffer, 0, nullptr, &objData, 0, 0);
+    context_->UpdateSubresource(baseComponent->cascadeConstantBuffer, 0, nullptr, &cascadeData, 0, 0);
 }

@@ -20,6 +20,7 @@ public:
 	virtual DirectX::SimpleMath::Vector3 GetPosition() const { return position; }
 	virtual DirectX::SimpleMath::Quaternion GetRotation() const { return rotation; }
 	virtual DirectX::SimpleMath::Vector3 GetScale() const { return scale; }
+	virtual void PrepareFrame() = 0;
 	virtual void DestroyResources() = 0;
 	virtual void Draw() = 0;
 	virtual void Initialize() = 0;

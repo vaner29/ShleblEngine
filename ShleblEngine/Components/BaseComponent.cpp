@@ -9,7 +9,7 @@ using namespace SimpleMath;
 
 BaseComponent::BaseComponent(Game* g) : GameComponent(g), layout_(nullptr), vertex_buffer_(nullptr), index_buffer_(nullptr),
 	strides{}, offsets{}, passThroughVS(false), colorModePS(false),
-	topologyType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST), textureFileName_(L"Textures/wood.dds")
+	topologyType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST), textureFileName_(L"Textures/wood.dds"), isShadowCasting_(true)
 {
 
 }
@@ -23,6 +23,34 @@ BaseComponent::BaseComponent(Game* g, std::vector<Vertex> client_points, std::ve
 
 BaseComponent::~BaseComponent()
 {
+}
+
+void BaseComponent::PrepareFrame()
+{
+	if (!isShadowCasting_)
+		return;
+
+	D3D11_VIEWPORT viewport;
+	viewport.Width = 1024.0f;
+	viewport.Height = 1024.0f;
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.MinDepth = 0;
+	viewport.MaxDepth = 1.0f;
+
+	game->context_->RSSetViewports(1, &viewport);
+
+	game->context_->IASetInputLayout(layout_);
+	game->context_->IASetPrimitiveTopology(topologyType);
+	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
+	game->context_->VSSetShader(DataProcesser::GetVertexShader("csm"), nullptr, 0);
+	game->context_->VSSetConstantBuffers(0, 1, &objConstantBuffer);
+	game->context_->PSSetShader(nullptr, nullptr, 0);
+	game->context_->GSSetShader(DataProcesser::GetGeometryShader("csm"), nullptr, 0);
+	game->context_->GSSetConstantBuffers(0, 1, &cascadeConstantBuffer);
+
+	game->context_->DrawIndexed(indices_.size(), 0, 0);
 }
 
 void BaseComponent::DestroyResources()
@@ -46,15 +74,21 @@ void BaseComponent::Draw()
 
 	game->context_->IASetInputLayout(layout_);
 	game->context_->IASetPrimitiveTopology(topologyType);
+
 	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
-	ID3D11Buffer** const_buffers_ = new ID3D11Buffer * [2];
-	const_buffers_[0] = objConstantBuffer;
-	const_buffers_[1] = game->sceneConstantBuffer;
-	game->context_->VSSetConstantBuffers(0, 2, const_buffers_);
-	game->context_->PSSetConstantBuffers(0, 2, const_buffers_);
-	ID3D11ShaderResourceView* test = DataProcesser::GetTextureView(textureFileName_);
-	game->context_->PSSetShaderResources(0, 1, &test);
+
+	//ID3D11Buffer** const_buffers_ = new ID3D11Buffer * [2];
+	//const_buffers_[0] = objConstantBuffer;
+	//const_buffers_[1] = game->sceneConstantBuffer;
+	game->context_->VSSetConstantBuffers(0, 1, &objConstantBuffer);
+	game->context_->PSSetConstantBuffers(0, 1, &game->sceneConstantBuffer);
+	game->context_->PSSetConstantBuffers(1, 1, &cascadeConstantBuffer);
+
+	ID3D11ShaderResourceView* texture = DataProcesser::GetTextureView(textureFileName_);
+	game->context_->PSSetShaderResources(0, 1, &texture);
+	const auto csm = game->depthShadowSrv_;
+	game->context_->PSSetShaderResources(1, 1, &csm);
 
 	game->context_->DrawIndexed(indices_.size(), 0, 0);
 }
@@ -151,6 +185,16 @@ void BaseComponent::Initialize()
 
 	game->device_->CreateBuffer(&constBufPerObjDesc, nullptr, &objConstantBuffer);
 
+	D3D11_BUFFER_DESC constBufCascadeDesc;
+	constBufCascadeDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	constBufCascadeDesc.Usage = D3D11_USAGE_DEFAULT;
+	constBufCascadeDesc.CPUAccessFlags = 0;
+	constBufCascadeDesc.MiscFlags = 0;
+	constBufCascadeDesc.StructureByteStride = 0;
+	constBufCascadeDesc.ByteWidth = sizeof(Matrix) * 5 + sizeof(Vector4);
+
+	game->device_->CreateBuffer(&constBufCascadeDesc, nullptr, &cascadeConstantBuffer);
+
 	/*auto res = CreateDDSTextureFromFile(game->Device.Get(), textureFileName, &diffuseTextureBuffer, &diffuseTextureView);
 	game->Context->GenerateMips(diffuseTextureView);*/
 
@@ -180,31 +224,12 @@ void BaseComponent::Update()
 	objData.worldViewProj = world * game->Camera->GetMatrix();
 	objData.invTrWorld = objData.invTrWorld = (isSpinningFloor > 0.5f) ? Matrix::Identity : (Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation)).Invert().Transpose();
 	objData.world = world; // Set world matrix
+	objData.WorldView = world * game->Camera->GetView();
 	objData.isSpinningFloor = this->isSpinningFloor;
 	objData.diffuseColor = this->diffuseColor;
 	objData.specularColor = this->specularColor;
 	objData.shininess = this->shininess;
 
-	KatamariGame* kgame = dynamic_cast<KatamariGame*>(game);
-	// Find closest 4 lights
-	std::vector<std::pair<float, size_t>> distances;
-	Vector3 objPos = GetPosition();
-	for (size_t i = 0; i < kgame->pointLights.size(); i++) {
-		if (kgame->pointLights[i].active) {
-			float dist = (kgame->pointLights[i].position - objPos).Length();
-			if (dist < 100.0f) { // Only consider lights within radius
-				distances.push_back({ dist, i });
-			}
-		}
-	}
-	std::sort(distances.begin(), distances.end()); // Sort by distance
-
-	objData.numPointLights = std::min(int(distances.size()), 4);
-	for (int i = 0; i < objData.numPointLights; i++) {
-		const auto& light = kgame->pointLights[distances[i].second];
-		objData.pointLights[i].position = Vector4(light.position.x, light.position.y, light.position.z, 1.0f);
-		objData.pointLights[i].color = Vector4(light.color.x, light.color.y, light.color.z, light.intensity);
-	}
 
 	game->context_->UpdateSubresource(objConstantBuffer, 0, nullptr, &objData, 0, 0);
 

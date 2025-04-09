@@ -107,20 +107,74 @@ void Game::CreateDepthStencilBuffer()
 	res = device_->CreateDepthStencilView(depth_stencil_buffer_, nullptr, &depth_stencil_view_);
 }
 
+void Game::CreateCsmDepthTextureArray()
+{
+	D3D11_TEXTURE2D_DESC depthDescription = {};
+	depthDescription.Width = 1024;
+	depthDescription.Height = 1024;
+	depthDescription.ArraySize = 5;
+	depthDescription.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
+	depthDescription.Format = DXGI_FORMAT_R32_TYPELESS;
+	depthDescription.MipLevels = 1;
+	depthDescription.SampleDesc.Count = 1;
+	depthDescription.SampleDesc.Quality = 0;
+	depthDescription.Usage = D3D11_USAGE_DEFAULT;
+	depthDescription.CPUAccessFlags = 0;
+	depthDescription.MiscFlags = 0;
+
+	auto res = device_->CreateTexture2D(&depthDescription, nullptr, &shadowTexArr_);
+
+	if (FAILED(res))
+	{
+		OutputDebugString(TEXT("Fatal error: Failed to create CSM depth texture array!\n"));
+	}
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC dViewDesc = {};
+	dViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	dViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+	dViewDesc.Texture2DArray = {};
+	dViewDesc.Texture2DArray.MipSlice = 0;
+	dViewDesc.Texture2DArray.FirstArraySlice = 0;
+	dViewDesc.Texture2DArray.ArraySize = 5;
+
+	res = device_->CreateDepthStencilView(shadowTexArr_, &dViewDesc, &depthShadowDsv_);
+
+	if (FAILED(res))
+	{
+		OutputDebugString(TEXT("Fatal error: Failed to create CSM depth stencil view!\n"));
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+	srvDesc.Texture2DArray = {};
+	srvDesc.Texture2DArray.MostDetailedMip = 0;
+	srvDesc.Texture2DArray.MipLevels = 1;
+	srvDesc.Texture2DArray.FirstArraySlice = 0;
+	srvDesc.Texture2DArray.ArraySize = 5;
+
+	res = device_->CreateShaderResourceView(shadowTexArr_, &srvDesc, &depthShadowSrv_);
+
+	if (FAILED(res))
+	{
+		OutputDebugString(TEXT("Fatal error: Failed to create CSM depth SRV!\n"));
+	}
+}
+
 void Game::CreateBackBuffer()
 {
 	auto res = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer_));	// __uuidof(ID3D11Texture2D)
 	res = device_->CreateRenderTargetView(back_buffer_, nullptr, &render_view_);
 }
 
-Game::Game(LPCWSTR name, int screen_width, int screen_height) : name_(name), frame_count_(0), components_()
+Game::Game(LPCWSTR name, int screen_width, int screen_height) : name_(name), frame_count_(0), dLight_(this)
 {
 	instance_ = GetModuleHandle(nullptr);
 
 	display_ = new DisplayWin32(name, instance_, screen_width, screen_height, this);
 	input_dev_ = new InputDevice(this);
 
-	Camera = new ::Camera();
+	Camera = new::Camera();
 	Camera->AspectRatio = static_cast<float>(screen_width) / static_cast<float>(screen_height);
 
 }
@@ -198,11 +252,12 @@ void Game::Run()
 
 		Update();
 
-		CBDataPerScene sceneData = {};
-		sceneData.ambientStrength = DirectX::SimpleMath::Vector4(0.0f, 0.0f, 0.0f, 0.2f); // 20% ambient strength
-		sceneData.viewPos = DirectX::SimpleMath::Vector4(this->Camera->Position.x, this->Camera->Position.y, this->Camera->Position.z, 1.0f);
-		sceneData.gTime = this->totalest_time_;
-		this->context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData, 0, 0);
+		//CBDataPerScene sceneData = {};
+		//sceneData.ambientStrength = DirectX::SimpleMath::Vector4(0.0f, 0.0f, 0.0f, 0.2f); // 20% ambient strength
+		//sceneData.viewPos = DirectX::SimpleMath::Vector4(this->Camera->Position.x, this->Camera->Position.y, this->Camera->Position.z, 1.0f);
+		//sceneData.gTime = this->totalest_time_;
+		//this->context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData, 0, 0);
+
 
 		PrepareFrame();
 
@@ -227,9 +282,15 @@ void Game::PrepareFrame()
 	context_->PSSetShader(DataProcesser::GetPixelShader("base"), nullptr, 0);
 
 	context_->PSSetSamplers(0, 1, &sampler_state_);
+	context_->PSSetSamplers(1, 1, &depth_sampler_state_);
 
 	SetBackgroundColor();
 	context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	for (const auto c : components_)
+	{
+		c->PrepareFrame();
+	}
 }
 
 void Game::SetBackgroundColor()
@@ -281,8 +342,23 @@ void Game::Initialize()
 
 void Game::Update()
 {
+	CBDataPerScene sceneData_ = {};
+	auto tmp = DirectX::SimpleMath::Vector4(20.0f, 50.0f, 20.0f, 0.0f);
+	tmp.Normalize();
+	dLight_.SetDirection(tmp);
+	sceneData_.LightPos = DirectX::SimpleMath::Vector4::Transform(dLight_.GetDirection(), Camera->GetView());
+	sceneData_.LightPos.Normalize();
+	sceneData_.LightColor = dLight_.GetColor();
+	sceneData_.AmbientSpecularPowType = DirectX::SimpleMath::Vector4(0.4f, 0.5f, 32, 0);
+	sceneData_.T = DirectX::SimpleMath::Matrix(
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, -0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.0f, 1.0f);
+	//sceneData_.gTime = this->totalest_time_;
+	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
 	Camera->UpdateMatrix();
-	for (auto c : components_)
+	for (const auto c : components_)
 	{
 		c->Update();
 	}
@@ -292,6 +368,10 @@ void Game::UpdateInternal()
 {
 }
 
+DirectionalLight* Game::GetDLight()
+{
+	return &dLight_;
+}
 
 void Game::PrepareResources()
 {
@@ -337,6 +417,8 @@ void Game::PrepareResources()
 
 	CreateDepthStencilBuffer();
 
+	CreateCsmDepthTextureArray();
+
 	DataProcesser::Initialize(this);
 
 	D3D11_SAMPLER_DESC samplerStateDesc = {};
@@ -350,6 +432,19 @@ void Game::PrepareResources()
 
 	res = device_->CreateSamplerState(&samplerStateDesc, &sampler_state_);
 
+	D3D11_SAMPLER_DESC depthSamplerStateDesc = {};
+	depthSamplerStateDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+	depthSamplerStateDesc.ComparisonFunc = D3D11_COMPARISON_GREATER_EQUAL;
+	depthSamplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	depthSamplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	depthSamplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	depthSamplerStateDesc.BorderColor[0] = 1.0f;
+	depthSamplerStateDesc.BorderColor[1] = 1.0f;
+	depthSamplerStateDesc.BorderColor[2] = 1.0f;
+	depthSamplerStateDesc.BorderColor[3] = 1.0f;
+
+	res = device_->CreateSamplerState(&depthSamplerStateDesc, &depth_sampler_state_);
+
 
 	CD3D11_RASTERIZER_DESC rastDesc = {};
 
@@ -361,6 +456,15 @@ void Game::PrepareResources()
 	res = device_->CreateRasterizerState(&rastDesc, &rast_state_);
 
 	context_->RSSetState(rast_state_);
+	
+	CD3D11_RASTERIZER_DESC shadowRastDesc = {};
+
+	shadowRastDesc.CullMode = D3D11_CULL_FRONT;
+	shadowRastDesc.FillMode = D3D11_FILL_SOLID;
+	shadowRastDesc.FrontCounterClockwise = true;
+	shadowRastDesc.DepthClipEnable = false;
+
+	res = device_->CreateRasterizerState(&shadowRastDesc, &shadow_rast_state_);
 
 	D3D11_BUFFER_DESC constBufPerSceneDesc = {};
 	constBufPerSceneDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;

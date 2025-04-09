@@ -16,6 +16,7 @@
 #include "DisplayWin32.h"
 #include "InputDevice.h"
 #include "Camera.h"
+#include "DirectionalLight.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -30,6 +31,7 @@ private:
 	void CreateDepthStencilBuffer();
 	void InitTimer();
 	void UpdateTimer();
+	void CreateCsmDepthTextureArray();
 
 protected:
 	virtual void SetBackgroundColor();
@@ -44,12 +46,14 @@ protected:
 public:
 	struct CBDataPerScene
 	{
-		DirectX::SimpleMath::Vector4 ambientStrength; // Ambient strength (xyz unused, w = strength)
-		DirectX::SimpleMath::Vector4 viewPos;     // Camera position in world space
-		float gTime;                              // Game time for animations
-		float cascadeSplits[4];
-		float padding[3];                         // Align to 16-byte boundary
+		DirectX::SimpleMath::Vector4 LightPos;
+		DirectX::SimpleMath::Vector4 LightColor;
+		DirectX::SimpleMath::Vector4 AmbientSpecularPowType; // a - ambient light strength, s - specularity, p - falloff power
+		DirectX::SimpleMath::Matrix T;
+		//float gTime;
+		//float padding[3];
 	};
+	DirectionalLight dLight_;
 	ID3D11Texture2D* depth_stencil_buffer_;
 	ID3D11DepthStencilView* depth_stencil_view_;
 	Camera* Camera;
@@ -69,14 +73,19 @@ public:
 	ID3D11Texture2D* render_srv_;
 	ID3D11RenderTargetView* render_view_;
 	ID3D11RasterizerState* rast_state_;
+	ID3D11RasterizerState* shadow_rast_state_;
 	ID3D11SamplerState* sampler_state_;
+	ID3D11SamplerState* depth_sampler_state_;
+	ID3D11Texture2D* shadowTexArr_;
+	ID3D11DepthStencilView* depthShadowDsv_;
+	ID3D11ShaderResourceView* depthShadowSrv_;
 	//int screen_resized_;
 	//float start_time_;
 	IDXGISwapChain* swap_chain_;
 	float totalest_time_ = 0.0f;
 	float total_time_;
 	float delta_time_;
-	std::vector<GameComponent*> components_;
+	std::vector<GameComponent*> components_{};
 	DisplayWin32* display_;
 	InputDevice* input_dev_;
 	unsigned int frame_count_;
@@ -85,6 +94,7 @@ public:
 	void Exit();
 	void MessageHandler();
 	void Run();
+	DirectionalLight* GetDLight();
 
 
 
