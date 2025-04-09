@@ -185,8 +185,8 @@ Game::~Game()
 	{
 		delete c;
 	}
-	delete display_;
-	delete input_dev_;
+	//delete display_;
+	//delete input_dev_;
 }
 
 void Game::Exit()
@@ -274,18 +274,14 @@ void Game::PrepareFrame()
 
 	context_->ClearState();
 
-	context_->RSSetState(rast_state_);
+	context_->OMSetRenderTargets(0, nullptr, depthShadowDsv_);
 
-	context_->OMSetRenderTargets(1, &render_view_, depth_stencil_view_);
+	context_->ClearDepthStencilView(depthShadowDsv_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	context_->VSSetShader(DataProcesser::GetVertexShader("base"), nullptr, 0);
-	context_->PSSetShader(DataProcesser::GetPixelShader("base"), nullptr, 0);
-
-	context_->PSSetSamplers(0, 1, &sampler_state_);
-	context_->PSSetSamplers(1, 1, &depth_sampler_state_);
-
-	SetBackgroundColor();
-	context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	context_->RSSetState(shadow_rast_state_);
+	context_->VSSetShader(DataProcesser::GetVertexShader("csm"), nullptr, 0);
+	context_->PSSetShader(nullptr, nullptr, 0);
+	context_->GSSetShader(DataProcesser::GetGeometryShader("csm"), nullptr, 0);
 
 	for (const auto c : components_)
 	{
@@ -304,12 +300,12 @@ void Game::SetBackgroundColor()
 
 void Game::DestroyResources()
 {
-	context_->Release();
-	back_buffer_->Release();
-	render_view_->Release();
-	swap_chain_->Release();
-	depth_stencil_view_->Release();
-	depth_stencil_buffer_->Release();
+	//context_->Release();
+	//back_buffer_->Release();
+	//render_view_->Release();
+	//swap_chain_->Release();
+	//depth_stencil_view_->Release();
+	//depth_stencil_buffer_->Release();
 	for (auto c : components_)
 	{
 		c->DestroyResources();
@@ -318,7 +314,19 @@ void Game::DestroyResources()
 
 void Game::Draw()
 {
+	context_->ClearState();
 
+	context_->OMSetRenderTargets(1, &render_view_, depth_stencil_view_);
+
+	constexpr float color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	context_->ClearRenderTargetView(render_view_, color);
+	context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	context_->PSSetSamplers(0, 1, &sampler_state_);
+	context_->PSSetSamplers(1, 1, &depth_sampler_state_);
+	context_->RSSetState(rast_state_);
+	context_->VSSetShader(DataProcesser::GetVertexShader("base"), nullptr, 0);
+	context_->PSSetShader(DataProcesser::GetPixelShader("base"), nullptr, 0);
 	for (auto c : components_)
 	{
 		c->Draw();
@@ -355,7 +363,7 @@ void Game::Update()
 		0.0f, -0.5f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f);
-	//sceneData_.gTime = this->totalest_time_;
+	sceneData_.gTime = this->totalest_time_;
 	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
 	Camera->UpdateMatrix();
 	for (const auto c : components_)
@@ -447,18 +455,15 @@ void Game::PrepareResources()
 
 
 	CD3D11_RASTERIZER_DESC rastDesc = {};
-
 	rastDesc.CullMode = D3D11_CULL_BACK;
 	rastDesc.FillMode = D3D11_FILL_SOLID;
 	rastDesc.FrontCounterClockwise = true;
 	rastDesc.DepthClipEnable = true;
 
 	res = device_->CreateRasterizerState(&rastDesc, &rast_state_);
-
 	context_->RSSetState(rast_state_);
 	
 	CD3D11_RASTERIZER_DESC shadowRastDesc = {};
-
 	shadowRastDesc.CullMode = D3D11_CULL_FRONT;
 	shadowRastDesc.FillMode = D3D11_FILL_SOLID;
 	shadowRastDesc.FrontCounterClockwise = true;

@@ -8,8 +8,8 @@ using namespace DirectX;
 using namespace SimpleMath;
 
 BaseComponent::BaseComponent(Game* g) : GameComponent(g), layout_(nullptr), vertex_buffer_(nullptr), index_buffer_(nullptr),
-	strides{}, offsets{}, passThroughVS(false), colorModePS(false),
-	topologyType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST), textureFileName_(L"Textures/wood.dds"), isShadowCasting_(true)
+strides{}, offsets{}, passThroughVS(false), colorModePS(false), rastState_(nullptr), samplerState_(nullptr),
+topologyType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST), textureFileName_(L"Textures/wood.dds"), isShadowCasting_(true)
 {
 
 }
@@ -20,94 +20,8 @@ BaseComponent::BaseComponent(Game* g, std::vector<Vertex> client_points, std::ve
 	points_ = client_points;
 }
 
-
-BaseComponent::~BaseComponent()
-{
-}
-
-void BaseComponent::PrepareFrame()
-{
-	if (!isShadowCasting_)
-		return;
-
-	D3D11_VIEWPORT viewport;
-	viewport.Width = 1024.0f;
-	viewport.Height = 1024.0f;
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.MinDepth = 0;
-	viewport.MaxDepth = 1.0f;
-
-	game->context_->RSSetViewports(1, &viewport);
-
-	game->context_->IASetInputLayout(layout_);
-	game->context_->IASetPrimitiveTopology(topologyType);
-	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
-	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
-	game->context_->VSSetShader(DataProcesser::GetVertexShader("csm"), nullptr, 0);
-	game->context_->VSSetConstantBuffers(0, 1, &objConstantBuffer);
-	game->context_->PSSetShader(nullptr, nullptr, 0);
-	game->context_->GSSetShader(DataProcesser::GetGeometryShader("csm"), nullptr, 0);
-	game->context_->GSSetConstantBuffers(0, 1, &cascadeConstantBuffer);
-
-	game->context_->DrawIndexed(indices_.size(), 0, 0);
-}
-
-void BaseComponent::DestroyResources()
-{
-	layout_->Release();
-	vertex_buffer_->Release();
-	index_buffer_->Release();
-}
-
-void BaseComponent::Draw()
-{
-	D3D11_VIEWPORT viewport = {};
-	viewport.Width = static_cast<float>(game->display_->client_width_);
-	viewport.Height = static_cast<float>(game->display_->client_height_);
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.MinDepth = 0;
-	viewport.MaxDepth = 1.0f;
-
-	game->context_->RSSetViewports(1, &viewport);
-
-	game->context_->IASetInputLayout(layout_);
-	game->context_->IASetPrimitiveTopology(topologyType);
-
-	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
-	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
-
-	//ID3D11Buffer** const_buffers_ = new ID3D11Buffer * [2];
-	//const_buffers_[0] = objConstantBuffer;
-	//const_buffers_[1] = game->sceneConstantBuffer;
-	game->context_->VSSetConstantBuffers(0, 1, &objConstantBuffer);
-	game->context_->PSSetConstantBuffers(0, 1, &game->sceneConstantBuffer);
-	game->context_->PSSetConstantBuffers(1, 1, &cascadeConstantBuffer);
-
-	ID3D11ShaderResourceView* texture = DataProcesser::GetTextureView(textureFileName_);
-	game->context_->PSSetShaderResources(0, 1, &texture);
-	const auto csm = game->depthShadowSrv_;
-	game->context_->PSSetShaderResources(1, 1, &csm);
-
-	game->context_->DrawIndexed(indices_.size(), 0, 0);
-}
-
 void BaseComponent::Initialize()
 {
-	D3D_SHADER_MACRO ShaderMacros[] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
-
-	int macrosCount = 0;
-	if (passThroughVS)
-	{
-		ShaderMacros[macrosCount++] = { "VERTEX_PASS_THROUGH", "1" };
-	}
-
-	if (colorModePS)
-	{
-		ShaderMacros[macrosCount++] = { "TREAT_TEX_AS_COL", "1" };
-	}
-
 	D3D11_INPUT_ELEMENT_DESC inputElements[] = {
 		D3D11_INPUT_ELEMENT_DESC {
 			"POSITION",
@@ -195,25 +109,80 @@ void BaseComponent::Initialize()
 
 	game->device_->CreateBuffer(&constBufCascadeDesc, nullptr, &cascadeConstantBuffer);
 
-	/*auto res = CreateDDSTextureFromFile(game->Device.Get(), textureFileName, &diffuseTextureBuffer, &diffuseTextureView);
-	game->Context->GenerateMips(diffuseTextureView);*/
-
-	/*D3D11_SAMPLER_DESC samplerStateDesc = {};
-	samplerStateDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerStateDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-	samplerStateDesc.MinLOD = 0.0f;
-	samplerStateDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	auto res = game->device_->CreateSamplerState(&samplerStateDesc, &samplerState);
-
-	const CD3D11_RASTERIZER_DESC rastDesc = CreateRasterizerStateDesc();
-
-	res = game->device_->CreateRasterizerState(&rastDesc, &rastState);*/
-
 }
+
+BaseComponent::~BaseComponent()
+{
+}
+
+void BaseComponent::PrepareFrame()
+{
+	if (!isShadowCasting_)
+		return;
+
+	D3D11_VIEWPORT viewport;
+	viewport.Width = 1024.0f;
+	viewport.Height = 1024.0f;
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.MinDepth = 0;
+	viewport.MaxDepth = 1.0f;
+
+	game->context_->RSSetViewports(1, &viewport);
+
+	game->context_->IASetInputLayout(layout_);
+	game->context_->IASetPrimitiveTopology(topologyType);
+	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
+	game->context_->VSSetConstantBuffers(0, 1, &objConstantBuffer);
+	game->context_->GSSetConstantBuffers(2, 1, &cascadeConstantBuffer);
+
+	game->context_->DrawIndexed(indices_.size(), 0, 0);
+}
+
+void BaseComponent::DestroyResources()
+{
+	layout_->Release();
+	vertex_buffer_->Release();
+	index_buffer_->Release();
+}
+
+void BaseComponent::Draw()
+{
+
+	D3D11_VIEWPORT viewport = {};
+	viewport.Width = static_cast<float>(game->display_->client_width_);
+	viewport.Height = static_cast<float>(game->display_->client_height_);
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.MinDepth = 0;
+	viewport.MaxDepth = 1.0f;
+
+	game->context_->RSSetViewports(1, &viewport);
+
+	game->context_->IASetInputLayout(layout_);
+	game->context_->IASetPrimitiveTopology(topologyType);
+
+	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
+	//ID3D11Buffer** const_buffers_ = new ID3D11Buffer * [2];
+	//const_buffers_[0] = objConstantBuffer;
+	//const_buffers_[1] = game->sceneConstantBuffer;
+	game->context_->VSSetConstantBuffers(0, 1, &objConstantBuffer);
+	game->context_->PSSetConstantBuffers(0, 1, &objConstantBuffer);
+	game->context_->PSSetConstantBuffers(1, 1, &game->sceneConstantBuffer);
+	game->context_->PSSetConstantBuffers(2, 1, &cascadeConstantBuffer);
+
+
+	ID3D11ShaderResourceView* texture = DataProcesser::GetTextureView(textureFileName_);
+	game->context_->PSSetShaderResources(0, 1, &texture);
+
+	const auto csm = game->depthShadowSrv_;
+	game->context_->PSSetShaderResources(1, 1, &csm);
+
+	game->context_->DrawIndexed(indices_.size(), 0, 0);
+}
+
 
 void BaseComponent::Update()
 {
@@ -221,16 +190,26 @@ void BaseComponent::Update()
 	const Matrix world = Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation) * Matrix::CreateTranslation(position);
 
 	CBDataPerObject objData = {};
-	objData.worldViewProj = world * game->Camera->GetMatrix();
-	objData.invTrWorld = objData.invTrWorld = (isSpinningFloor > 0.5f) ? Matrix::Identity : (Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation)).Invert().Transpose();
-	objData.world = world; // Set world matrix
+	objData.worldViewProj = world * game->Camera->GetViewProj();
+	objData.world = world;
 	objData.WorldView = world * game->Camera->GetView();
-	objData.isSpinningFloor = this->isSpinningFloor;
-	objData.diffuseColor = this->diffuseColor;
-	objData.specularColor = this->specularColor;
-	objData.shininess = this->shininess;
+	objData.invTrWorld = (isSpinningFloor > 0.5f) ? Matrix::Identity : (Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation)).Invert().Transpose();
+	objData.isSpinningFloor = isSpinningFloor;
+	objData.diffuseColor = diffuseColor;
+	objData.specularColor = specularColor;
+	objData.shininess = shininess;
 
+	CbDataCascade cascadeData = {};
+	auto tmp = game->GetDLight()->GetLightSpaceMatrices();
+	for (int i = 0; i < 5; ++i)
+	{
+		cascadeData.ViewProj[i] = tmp[i];
+	}
+	cascadeData.Distance = game->GetDLight()->GetShadowCascadeDistances();
+
+	//objData.WorldViewProj = world * cascadeData.ViewProj[0];
 
 	game->context_->UpdateSubresource(objConstantBuffer, 0, nullptr, &objData, 0, 0);
+	game->context_->UpdateSubresource(cascadeConstantBuffer, 0, nullptr, &cascadeData, 0, 0);
 
 }

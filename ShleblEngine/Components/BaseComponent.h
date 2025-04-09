@@ -20,9 +20,9 @@ public:
 	struct CBDataPerObject
 	{
 		DirectX::SimpleMath::Matrix worldViewProj;
-		DirectX::SimpleMath::Matrix invTrWorld;
 		DirectX::SimpleMath::Matrix world;
 		DirectX::SimpleMath::Matrix WorldView;
+		DirectX::SimpleMath::Matrix invTrWorld;
 		float isSpinningFloor;
 		DirectX::SimpleMath::Vector3 diffuseColor;
 		DirectX::SimpleMath::Vector3 specularColor;
@@ -47,6 +47,10 @@ protected:
 	D3D_PRIMITIVE_TOPOLOGY topologyType;
 	bool isShadowCasting_;
 public:
+	ID3D11RasterizerState* rastState_;
+	ID3D11RasterizerState* shadowRastState_;
+	ID3D11SamplerState* samplerState_;
+	ID3D11SamplerState* depthSamplerState_;
 	ID3D11Buffer* objConstantBuffer = nullptr;
 	ID3D11Buffer* cascadeConstantBuffer = nullptr;
 	bool passThroughVS;

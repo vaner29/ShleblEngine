@@ -22,11 +22,13 @@ Camera::Camera()
 
 void Camera::UpdateMatrix()
 {
+    view_ = Matrix::CreateLookAt(Position, Target, Up);
     if (IsOrthographic)
-        viewProj = Matrix::CreateLookAt(Position, Target, Up) * Matrix::CreateOrthographic(OrthographicWidth, OrthographicHeight, NearPlane / 10.0f, FarPlane);
+        proj_ = Matrix::CreateOrthographic(OrthographicWidth, OrthographicHeight, NearPlane / 10.0f, FarPlane);
     else
-        viewProj = Matrix::CreateLookAt(Position, Target, Up) * Matrix::CreatePerspectiveFieldOfView(FOV, AspectRatio, NearPlane, FarPlane);
+        proj_ = Matrix::CreatePerspectiveFieldOfView(FOV, AspectRatio, NearPlane, FarPlane);
 }
+
 
 Matrix Camera::GetMatrix() const
 {

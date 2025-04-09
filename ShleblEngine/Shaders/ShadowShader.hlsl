@@ -33,7 +33,7 @@ GS_IN VSMain(VS_IN input)
     return output;
 }
 
-cbuffer cbCascade : register(b0)
+cbuffer cbCascade : register(b2)
 {
     float4x4 gViewProj[CASCADE_COUNT + 1];
     float4 gDistances;

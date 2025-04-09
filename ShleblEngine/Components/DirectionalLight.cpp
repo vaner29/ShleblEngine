@@ -8,7 +8,7 @@ using namespace DirectX;
 using namespace SimpleMath;
 
 DirectionalLight::DirectionalLight(Game* g) : lightDirection_(0.0f, 1.0f, 0.0f, 0.0f),
-lightColor_(1.0f, 1.0f, 1.0f, 1.0f), game_(g)
+lightColor_(0.5f, 0.5f, 0.5f, 1.0f), game_(g)
 {
     shadowCascadeLevels_.push_back(1000.0f / 50.0f);
     shadowCascadeLevels_.push_back(1000.0f / 25.0f);
@@ -54,7 +54,7 @@ Matrix DirectionalLight::GetLightSpaceMatrix(const float nearPlane, const float 
     constexpr float zMult = 10.0f; // how much geometry to include from outside the view frustum
     minZ = (minZ < 0) ? minZ * zMult : minZ / zMult;
     maxZ = (maxZ < 0) ? maxZ / zMult : maxZ * zMult;
-    std::cout << minX << " " << maxX << " " << minY << " " << maxY << " " << minZ << " " << maxZ << " " << "\n";
+    //std::cout << minX << " " << maxX << " " << minY << " " << maxY << " " << minZ << " " << maxZ << " " << "\n";
     const auto lightProjection = Matrix::CreateOrthographicOffCenter(minX, maxX, minY, maxY, minZ, maxZ);
 
     return lightView * lightProjection;

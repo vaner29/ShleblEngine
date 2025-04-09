@@ -50,8 +50,8 @@ public:
 		DirectX::SimpleMath::Vector4 LightColor;
 		DirectX::SimpleMath::Vector4 AmbientSpecularPowType; // a - ambient light strength, s - specularity, p - falloff power
 		DirectX::SimpleMath::Matrix T;
-		//float gTime;
-		//float padding[3];
+		float gTime;
+		float padding[3];
 	};
 	DirectionalLight dLight_;
 	ID3D11Texture2D* depth_stencil_buffer_;

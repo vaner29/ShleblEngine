@@ -20,6 +20,8 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
     RectangleComponent* quad = new RectangleComponent(this, L"Textures/square.dds");
     quad->SetRotation(Quaternion::CreateFromAxisAngle(Vector3::Left, XM_PI / 2.0f));
     quad->SetScale(Vector3::One * 1000.0f);
+    quad->shininess = 0.1f;
+    quad->specularColor = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
     components_.push_back(quad);
 
     for (int i = 0; i < 10; ++i)
@@ -112,13 +114,13 @@ void KatamariGame::Update()
 
     std::cout << ball->GetPosition().x << " " << ball->GetPosition().y << " " << ball->GetPosition().z << " " << std::endl;
 
-    //if (input_dev_->IsKeyDown(Keys::E)) ShootPointLight();
     //ball->Update();
     //for (auto object : furniture)
         //object->Update();
 
     Game::Update();
-    // Update light positions
+
+    //Update light positions
     for (size_t i = 0; i < pointLights.size(); i++) {
         auto& light = pointLights[i];
         if (light.active) {
@@ -141,35 +143,37 @@ void KatamariGame::Update()
     for (auto* comp : components_) {
         UpdateObjectLights(comp);
     }
-    //Camera->UpdateMatrix();
+    Camera->UpdateMatrix();
 
    //Game::Update();
 }
 
 
-void KatamariGame::PrepareFrame()
-{
-
-    context_->ClearState();
-
-    context_->RSSetState(rast_state_);
-
-    context_->OMSetRenderTargets(1, &render_view_, depth_stencil_view_);
-
-    context_->VSSetShader(DataProcesser::GetVertexShader("base"), nullptr, 0);
-    context_->PSSetShader(DataProcesser::GetPixelShader("base"), nullptr, 0);
-
-    context_->PSSetSamplers(0, 1, &sampler_state_);
-    context_->PSSetSamplers(1, 1, &depth_sampler_state_);
-
-    SetBackgroundColor();
-    context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-    for (const auto c : components_)
-    {
-        c->PrepareFrame();
-    }
-}
+//void KatamariGame::PrepareFrame()
+//{
+//
+//    context_->ClearState();
+//
+//    context_->RSSetState(rast_state_);
+//
+//    context_->OMSetRenderTargets(1, &render_view_, depth_stencil_view_);
+//
+//    SetBackgroundColor();
+//    context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+//
+//    context_->VSSetShader(DataProcesser::GetVertexShader("csm"), nullptr, 0);
+//    context_->GSSetShader(DataProcesser::GetGeometryShader("csm"), nullptr, 0);
+//
+//    context_->PSSetSamplers(0, 1, &sampler_state_);
+//    context_->PSSetSamplers(1, 1, &depth_sampler_state_);
+//
+//
+//
+//    for (const auto c : components_)
+//    {
+//        c->PrepareFrame();
+//    }
+//}
 
 void KatamariGame::Initialize()
 {
@@ -244,7 +248,7 @@ void KatamariGame::ShootPointLight()
             shootDir.Normalize();
             shootDir.y = 0;
             light.velocity = shootDir * 20.0f; // 20 units/sec
-            light.color = Vector3(1.0f, 0.5f, 1.0f);
+            light.color = Vector3(1.0f, 0.0f, 1.0f);
             lightSpheres[i]->SetPosition(light.position);
             lightSpheres[i]->diffuseColor = light.color;
             break;
@@ -261,17 +265,15 @@ void KatamariGame::UpdateObjectLights(GameComponent* obj)
     const Matrix world = Matrix::CreateScale(baseComponent->scale) * Matrix::CreateFromQuaternion(baseComponent->rotation) * Matrix::CreateTranslation(baseComponent->position);
 
     BaseComponent::CBDataPerObject objData = {};
-    objData.worldViewProj = world * Camera->GetMatrix();
-    objData.invTrWorld = objData.invTrWorld = (baseComponent->isSpinningFloor > 0.5f) ? Matrix::Identity : (Matrix::CreateScale(baseComponent->scale) * Matrix::CreateFromQuaternion(baseComponent->rotation)).Invert().Transpose();
-    objData.world = world; // Set world matrix
+    objData.worldViewProj = world * Camera->GetViewProj();
+    objData.world = world;
     objData.WorldView = world * Camera->GetView();
+    objData.invTrWorld = (baseComponent->isSpinningFloor > 0.5f) ? Matrix::Identity : (Matrix::CreateScale(baseComponent->scale) * Matrix::CreateFromQuaternion(baseComponent->rotation)).Invert().Transpose();
     objData.isSpinningFloor = baseComponent->isSpinningFloor;
     objData.diffuseColor = baseComponent->diffuseColor;
     objData.specularColor = baseComponent->specularColor;
     objData.shininess = baseComponent->shininess;
 
-    //baseComponent->Update(); // Fill basic data
-    //this->context_->UpdateSubresource(baseComponent->const_buffers_[0], 0, nullptr, &objData, 0, 0); // Get current data
 
     // Find closest 10 lights
     std::vector<std::pair<float, size_t>> distances;

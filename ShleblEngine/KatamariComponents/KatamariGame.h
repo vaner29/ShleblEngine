@@ -30,7 +30,7 @@ public:
     std::vector<KatamariTrash*> furniture{};
     KatamariGame();
     void Update() override;
-    void PrepareFrame() override;
+    //void PrepareFrame() override;
     void Initialize() override;
 
     // Shadow map resources
@@ -40,5 +40,5 @@ public:
     ID3D11DepthStencilView* shadowMapDSVs[NumCascades] = { nullptr }; // One DSV per cascade
     ID3D11ShaderResourceView* shadowMapSRV = nullptr;
     ID3D11DepthStencilState* shadowDepthState = nullptr;
-    void RenderShadowMaps();
+    //void RenderShadowMaps();
 };
