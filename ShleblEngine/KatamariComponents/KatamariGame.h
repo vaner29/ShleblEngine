@@ -32,6 +32,7 @@ public:
     void Update() override;
     //void PrepareFrame() override;
     void Initialize() override;
+    void Draw() override;
 
     // Shadow map resources
     static const int NumCascades = 4;
@@ -40,5 +41,6 @@ public:
     ID3D11DepthStencilView* shadowMapDSVs[NumCascades] = { nullptr }; // One DSV per cascade
     ID3D11ShaderResourceView* shadowMapSRV = nullptr;
     ID3D11DepthStencilState* shadowDepthState = nullptr;
+    bool isDebug = false;
     //void RenderShadowMaps();
 };

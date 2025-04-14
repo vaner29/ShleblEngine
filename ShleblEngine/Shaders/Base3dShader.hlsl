@@ -102,16 +102,16 @@ float ShadowCalculation(float4 posWorldSpace, float4 posViewSpace, float dotN)
         return 0.0f;
     }
 
-    float bias = max(0.05f * (1.0f - dotN), 0.005f);
-    const float biasModifier = 0.5f;
+    float bias = max(0.001f * (1.0f - dotN), 0.0001f);
     if (layer == CASCADE_COUNT)
     {
-        bias *= 1 / (1000.0 * biasModifier);
+        bias *= 1 / 1000.0f;
     }
     else
     {
-        bias *= 1 / (gDistances[layer] * biasModifier);
+        bias *= gDistances[layer] / 1000.0f;
     }
+
 
 	// PCF
     float shadow = 0.0f;

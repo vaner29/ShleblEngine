@@ -81,7 +81,6 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
     bread->collision.Radius = 2.5f;
     components_.push_back(bread);
     furniture.push_back(bread);
-    cameraController.targetBall = ball;
 
     KatamariTrash* car = new KatamariTrash(this, "Models/car.obj", L"Textures/car.dds", 7.0f, Vector3(0.0f, 1.0f, 0.0f));
     car->SetScale(Vector3(30.0f, 30.0f, 30.0f));
@@ -191,6 +190,12 @@ void KatamariGame::Initialize()
         }
         });
 
+    input_dev_->KeyPressed.AddLambda([this](Keys key) {
+        if (key == Keys::Space) {
+            isDebug = !isDebug;
+        }
+        });
+
     // Initialize shadow map texture array
     D3D11_TEXTURE2D_DESC shadowTexDesc = {};
     shadowTexDesc.Width = ShadowMapSize;
@@ -235,6 +240,33 @@ void KatamariGame::Initialize()
     device_->CreateDepthStencilState(&dsDesc, &shadowDepthState);
 
     Game::Initialize();
+}
+
+void KatamariGame::Draw()
+{
+    context_->ClearState();
+
+    context_->OMSetRenderTargets(1, &render_view_, depth_stencil_view_);
+
+    constexpr float color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    context_->ClearRenderTargetView(render_view_, color);
+    context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+    context_->PSSetSamplers(0, 1, &sampler_state_);
+    context_->PSSetSamplers(1, 1, &depth_sampler_state_);
+    context_->RSSetState(rast_state_);
+    if (isDebug) {
+        context_->VSSetShader(DataProcesser::GetVertexShader("spinny"), nullptr, 0);
+        context_->PSSetShader(DataProcesser::GetPixelShader("spinny"), nullptr, 0);
+    }
+    else {
+        context_->VSSetShader(DataProcesser::GetVertexShader("base"), nullptr, 0);
+        context_->PSSetShader(DataProcesser::GetPixelShader("base"), nullptr, 0);
+    }
+    for (auto c : components_)
+    {
+        c->Draw();
+    }
 }
 
 void KatamariGame::ShootPointLight()
