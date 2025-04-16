@@ -7,6 +7,18 @@
 using namespace DirectX;
 using namespace SimpleMath;
 
+CD3D11_RASTERIZER_DESC BaseComponent::CreateRasterizerStateDesc()
+{
+	CD3D11_RASTERIZER_DESC rastDesc = {};
+
+	rastDesc.CullMode = D3D11_CULL_BACK;
+	rastDesc.FillMode = D3D11_FILL_SOLID;
+	rastDesc.FrontCounterClockwise = true;
+	rastDesc.DepthClipEnable = true;
+
+	return rastDesc;
+}
+
 BaseComponent::BaseComponent(Game* g) : GameComponent(g), layout_(nullptr), vertex_buffer_(nullptr), index_buffer_(nullptr),
 strides{}, offsets{}, passThroughVS(false), colorModePS(false), rastState_(nullptr), samplerState_(nullptr),
 topologyType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST), textureFileName_(L"Textures/wood.dds"), isShadowCasting_(true)
@@ -99,16 +111,6 @@ void BaseComponent::Initialize()
 
 	game->device_->CreateBuffer(&constBufPerObjDesc, nullptr, &objConstantBuffer);
 
-	D3D11_BUFFER_DESC constBufCascadeDesc;
-	constBufCascadeDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	constBufCascadeDesc.Usage = D3D11_USAGE_DEFAULT;
-	constBufCascadeDesc.CPUAccessFlags = 0;
-	constBufCascadeDesc.MiscFlags = 0;
-	constBufCascadeDesc.StructureByteStride = 0;
-	constBufCascadeDesc.ByteWidth = sizeof(Matrix) * 5 + sizeof(Vector4);
-
-	game->device_->CreateBuffer(&constBufCascadeDesc, nullptr, &cascadeConstantBuffer);
-
 }
 
 BaseComponent::~BaseComponent()
@@ -135,7 +137,7 @@ void BaseComponent::PrepareFrame()
 	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
 	game->context_->VSSetConstantBuffers(0, 1, &objConstantBuffer);
-	game->context_->GSSetConstantBuffers(2, 1, &cascadeConstantBuffer);
+	game->context_->GSSetConstantBuffers(0, 1, game->GetCascadeCb());
 
 	game->context_->DrawIndexed(indices_.size(), 0, 0);
 }
@@ -165,20 +167,13 @@ void BaseComponent::Draw()
 
 	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
-	//ID3D11Buffer** const_buffers_ = new ID3D11Buffer * [2];
-	//const_buffers_[0] = objConstantBuffer;
-	//const_buffers_[1] = game->sceneConstantBuffer;
+	//game->GetContext()->VSSetShader(ResourceFactory::GetVertexShader("gbuffer"), nullptr, 0);
 	game->context_->VSSetConstantBuffers(0, 1, &objConstantBuffer);
-	game->context_->PSSetConstantBuffers(0, 1, &objConstantBuffer);
-	game->context_->PSSetConstantBuffers(1, 1, &game->sceneConstantBuffer);
-	game->context_->PSSetConstantBuffers(2, 1, &cascadeConstantBuffer);
+	//game->GetContext()->PSSetShader(ResourceFactory::GetPixelShader("gbuffer"), nullptr, 0);
 
 
 	ID3D11ShaderResourceView* texture = DataProcesser::GetTextureView(textureFileName_);
 	game->context_->PSSetShaderResources(0, 1, &texture);
-
-	const auto csm = game->depthShadowSrv_;
-	game->context_->PSSetShaderResources(1, 1, &csm);
 
 	game->context_->DrawIndexed(indices_.size(), 0, 0);
 }
@@ -193,23 +188,23 @@ void BaseComponent::Update()
 	objData.worldViewProj = world * game->Camera->GetViewProj();
 	objData.world = world;
 	objData.WorldView = world * game->Camera->GetView();
-	objData.invTrWorld = (isSpinningFloor > 0.5f) ? Matrix::Identity : (Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation)).Invert().Transpose();
+	objData.invTrWorld = (world * game->Camera->GetView()).Invert().Transpose();
 	objData.isSpinningFloor = isSpinningFloor;
 	objData.diffuseColor = diffuseColor;
 	objData.specularColor = specularColor;
 	objData.shininess = shininess;
 
-	CbDataCascade cascadeData = {};
-	auto tmp = game->GetDLight()->GetLightSpaceMatrices();
-	for (int i = 0; i < 5; ++i)
-	{
-		cascadeData.ViewProj[i] = tmp[i];
-	}
-	cascadeData.Distance = game->GetDLight()->GetShadowCascadeDistances();
+	//CbDataCascade cascadeData = {};
+	//auto tmp = game->GetDLight()->GetLightSpaceMatrices();
+	//for (int i = 0; i < 5; ++i)
+	//{
+	//	cascadeData.ViewProj[i] = tmp[i];
+	//}
+	//cascadeData.Distance = game->GetDLight()->GetShadowCascadeDistances();
 
 	//objData.WorldViewProj = world * cascadeData.ViewProj[0];
 
 	game->context_->UpdateSubresource(objConstantBuffer, 0, nullptr, &objData, 0, 0);
-	game->context_->UpdateSubresource(cascadeConstantBuffer, 0, nullptr, &cascadeData, 0, 0);
+	//game->context_->UpdateSubresource(cascadeConstantBuffer, 0, nullptr, &cascadeData, 0, 0);
 
 }

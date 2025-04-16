@@ -31,11 +31,6 @@ public:
 		int numPointLights;            // Number of active lights (0-4)
 		float padding[3];              // Align to 256 bytes
 	};
-	struct CbDataCascade
-	{
-		DirectX::SimpleMath::Matrix ViewProj[5];
-		DirectX::SimpleMath::Vector4 Distance;
-	};
 protected:
 	ID3D11InputLayout* layout_;
 	ID3D11Buffer* vertex_buffer_;
@@ -64,6 +59,7 @@ public:
 	void Draw() override;
 	void Initialize() override;
 	void Update() override;
+	virtual CD3D11_RASTERIZER_DESC CreateRasterizerStateDesc();
 	float isSpinningFloor = 0.0f;
 	DirectX::SimpleMath::Vector3 diffuseColor = { 1.0f, 1.0f, 1.0f };  // Default white
 	DirectX::SimpleMath::Vector3 specularColor = { 1.0f, 1.0f, 1.0f }; // Default white

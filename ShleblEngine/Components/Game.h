@@ -17,11 +17,13 @@
 #include "InputDevice.h"
 #include "Camera.h"
 #include "DirectionalLight.h"
+#include "GBuffer.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxguid.lib")
+class LightVolume;
 
 class Game
 {
@@ -50,10 +52,18 @@ public:
 		DirectX::SimpleMath::Vector4 LightColor;
 		DirectX::SimpleMath::Vector4 AmbientSpecularPowType; // a - ambient light strength, s - specularity, p - falloff power
 		DirectX::SimpleMath::Matrix T;
+		DirectX::SimpleMath::Matrix ViewMatrix;
 		float gTime;
 		float padding[3];
 	};
+	struct CbDataCascade
+	{
+		DirectX::SimpleMath::Matrix ViewProj[5];
+		DirectX::SimpleMath::Vector4 Distance;
+	};
 	DirectionalLight dLight_;
+	LightVolume* lightVolumeComponent_;
+
 	ID3D11Texture2D* depth_stencil_buffer_;
 	ID3D11DepthStencilView* depth_stencil_view_;
 	Camera* Camera;
@@ -63,24 +73,34 @@ public:
 	ID3D11PixelShader* pixel_shader_;
 	ID3DBlob* pixel_shader_byte_code_;
 	ID3D11Texture2D* back_buffer_;
+
 	ID3D11Buffer* sceneConstantBuffer = nullptr;
+	CBDataPerScene sceneData_{};
+	ID3D11Buffer* cascadeCBuffer_;
+
 	ID3D11DeviceContext* context_;
-	//int debug_annotation_;
+
 	Microsoft::WRL::ComPtr<ID3D11Device> device_;
 	HINSTANCE instance_;
 	LPCWSTR name_;
 	std::chrono::steady_clock::time_point prev_time_;
 	ID3D11Texture2D* render_srv_;
 	ID3D11RenderTargetView* render_view_;
+
 	ID3D11RasterizerState* rast_state_;
 	ID3D11RasterizerState* shadow_rast_state_;
+
+	ID3D11DepthStencilState* defaultDepthState_;
+	ID3D11DepthStencilState* quadDepthState_;
+
 	ID3D11SamplerState* sampler_state_;
 	ID3D11SamplerState* depth_sampler_state_;
+	ID3D11BlendState* blendState_;
+
 	ID3D11Texture2D* shadowTexArr_;
 	ID3D11DepthStencilView* depthShadowDsv_;
 	ID3D11ShaderResourceView* depthShadowSrv_;
-	//int screen_resized_;
-	//float start_time_;
+
 	IDXGISwapChain* swap_chain_;
 	float totalest_time_ = 0.0f;
 	float total_time_;
@@ -89,11 +109,13 @@ public:
 	DisplayWin32* display_;
 	InputDevice* input_dev_;
 	unsigned int frame_count_;
+	GBuffer gBuffer_;
 	Game(LPCWSTR name, int screen_width, int screen_height);
 	virtual ~Game();
 	void Exit();
 	void MessageHandler();
 	void Run();
+	ID3D11Buffer* const* GetCascadeCb() const;
 	DirectionalLight* GetDLight();
 
 
