@@ -111,7 +111,42 @@ void BaseComponent::Initialize()
 
 	game->device_->CreateBuffer(&constBufPerObjDesc, nullptr, &objConstantBuffer);
 
+	D3D11_SAMPLER_DESC samplerStateDesc = {};
+	samplerStateDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	//samplerStateDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerStateDesc.MinLOD = 0.0f;
+	samplerStateDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	auto res = game->device_->CreateSamplerState(&samplerStateDesc, &samplerState_);
+
+	D3D11_SAMPLER_DESC depthSamplerStateDesc = {};
+	depthSamplerStateDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+	depthSamplerStateDesc.ComparisonFunc = D3D11_COMPARISON_GREATER_EQUAL;
+	depthSamplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	depthSamplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	depthSamplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	depthSamplerStateDesc.BorderColor[0] = 1.0f;
+	depthSamplerStateDesc.BorderColor[1] = 1.0f;
+	depthSamplerStateDesc.BorderColor[2] = 1.0f;
+	depthSamplerStateDesc.BorderColor[3] = 1.0f;
+
+	res = game->device_->CreateSamplerState(&depthSamplerStateDesc, &depthSamplerState_);
+
+	const CD3D11_RASTERIZER_DESC rastDesc = CreateRasterizerStateDesc();
+
+	res = game->device_->CreateRasterizerState(&rastDesc, &rastState_);
+
+	CD3D11_RASTERIZER_DESC shadowRastDesc = CreateRasterizerStateDesc();
+
+	shadowRastDesc.CullMode = D3D11_CULL_FRONT;
+	shadowRastDesc.DepthClipEnable = false;
+
+	res = game->device_->CreateRasterizerState(&shadowRastDesc, &shadowRastState_);
 }
+
 
 BaseComponent::~BaseComponent()
 {
@@ -136,7 +171,12 @@ void BaseComponent::PrepareFrame()
 	game->context_->IASetPrimitiveTopology(topologyType);
 	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
+
+	game->context_->VSSetShader(DataProcesser::GetVertexShader("csm"), nullptr, 0);
 	game->context_->VSSetConstantBuffers(0, 1, &objConstantBuffer);
+
+	game->context_->PSSetShader(nullptr, nullptr, 0);
+	game->context_->GSSetShader(DataProcesser::GetGeometryShader("csm"), nullptr, 0);
 	game->context_->GSSetConstantBuffers(0, 1, game->GetCascadeCb());
 
 	game->context_->DrawIndexed(indices_.size(), 0, 0);
@@ -167,13 +207,15 @@ void BaseComponent::Draw()
 
 	game->context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 	game->context_->IASetVertexBuffers(0, 1, &vertex_buffer_, strides, offsets);
-	//game->GetContext()->VSSetShader(ResourceFactory::GetVertexShader("gbuffer"), nullptr, 0);
+	game->context_->VSSetShader(DataProcesser::GetVertexShader("gbuffer"), nullptr, 0); //TODO: move that too
 	game->context_->VSSetConstantBuffers(0, 1, &objConstantBuffer);
-	//game->GetContext()->PSSetShader(ResourceFactory::GetPixelShader("gbuffer"), nullptr, 0);
+	game->context_->PSSetShader(DataProcesser::GetPixelShader("gbuffer"), nullptr, 0);
 
 
 	ID3D11ShaderResourceView* texture = DataProcesser::GetTextureView(textureFileName_);
 	game->context_->PSSetShaderResources(0, 1, &texture);
+
+	game->context_->PSSetSamplers(0, 1, &samplerState_);
 
 	game->context_->DrawIndexed(indices_.size(), 0, 0);
 }
@@ -189,10 +231,10 @@ void BaseComponent::Update()
 	objData.world = world;
 	objData.WorldView = world * game->Camera->GetView();
 	objData.invTrWorld = (world * game->Camera->GetView()).Invert().Transpose();
-	objData.isSpinningFloor = isSpinningFloor;
-	objData.diffuseColor = diffuseColor;
-	objData.specularColor = specularColor;
-	objData.shininess = shininess;
+	//objData.isSpinningFloor = isSpinningFloor;
+	//objData.diffuseColor = diffuseColor;
+	//objData.specularColor = specularColor;
+	//objData.shininess = shininess;
 
 	//CbDataCascade cascadeData = {};
 	//auto tmp = game->GetDLight()->GetLightSpaceMatrices();

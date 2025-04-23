@@ -23,7 +23,7 @@ protected:
     float shootDistance = 100.0f;
     DirectX::SimpleMath::Vector3 lightPoolPosition = { 0.0f, -1.0f, 0.0f };
     void ShootPointLight();
-    void UpdateObjectLights(GameComponent* obj);
+    //void UpdateObjectLights(GameComponent* obj);
 public:
     std::vector<PointLight> pointLights;
     KatamariBall* ball;
@@ -32,7 +32,7 @@ public:
     void Update() override;
     //void PrepareFrame() override;
     void Initialize() override;
-    void Draw() override;
+    //void Draw() override;
 
     // Shadow map resources
     static const int NumCascades = 4;

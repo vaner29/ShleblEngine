@@ -23,13 +23,13 @@ public:
 		DirectX::SimpleMath::Matrix world;
 		DirectX::SimpleMath::Matrix WorldView;
 		DirectX::SimpleMath::Matrix invTrWorld;
-		float isSpinningFloor;
-		DirectX::SimpleMath::Vector3 diffuseColor;
-		DirectX::SimpleMath::Vector3 specularColor;
-		float shininess;
-		PointLightData pointLights[10]; // Up to 4 closest lights
-		int numPointLights;            // Number of active lights (0-4)
-		float padding[3];              // Align to 256 bytes
+		//float isSpinningFloor;
+		//DirectX::SimpleMath::Vector3 diffuseColor;
+		//DirectX::SimpleMath::Vector3 specularColor;
+		//float shininess;
+		//PointLightData pointLights[10]; // Up to 4 closest lights
+		//int numPointLights;            // Number of active lights (0-4)
+		//float padding[3];              // Align to 256 bytes
 	};
 protected:
 	ID3D11InputLayout* layout_;

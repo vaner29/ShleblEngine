@@ -329,8 +329,7 @@ void Game::Draw()
 	context_->ClearRenderTargetView(gBuffer_.albedoRtv_.Get(), color);
 	context_->ClearRenderTargetView(gBuffer_.positionRtv_.Get(), color);
 	context_->ClearRenderTargetView(gBuffer_.normalRtv_.Get(), color);
-
-	//context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	//context_->PSSetSamplers(0, 1, &sampler_state_);
 	//context_->PSSetSamplers(1, 1, &depth_sampler_state_);
@@ -452,8 +451,19 @@ void Game::Update()
 		0.0f, -0.5f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f);
-	sceneData_.gTime = this->totalest_time_;
+	sceneData_.ViewMatrix = Camera->GetView();
+	//sceneData_.gTime = this->totalest_time_;
+
+	CbDataCascade cascadeData = {};
+	auto tmp1 = GetDLight()->GetLightSpaceMatrices();
+	for (int i = 0; i < 5; ++i)
+	{
+		cascadeData.ViewProj[i] = tmp1[i];
+	}
+	cascadeData.Distance = GetDLight()->GetShadowCascadeDistances();
+
 	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
+	context_->UpdateSubresource(cascadeCBuffer_, 0, nullptr, &cascadeData, 0, 0);
 	Camera->UpdateMatrix();
 	for (const auto c : components_)
 	{
@@ -525,64 +535,6 @@ void Game::PrepareResources()
 
 	gBuffer_.Initialize();
 
-	D3D11_SAMPLER_DESC samplerStateDesc = {};
-	samplerStateDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerStateDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-	samplerStateDesc.MinLOD = 0.0f;
-	samplerStateDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	res = device_->CreateSamplerState(&samplerStateDesc, &sampler_state_);
-
-	D3D11_SAMPLER_DESC depthSamplerStateDesc = {};
-	depthSamplerStateDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
-	depthSamplerStateDesc.ComparisonFunc = D3D11_COMPARISON_GREATER_EQUAL;
-	depthSamplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-	depthSamplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-	depthSamplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	depthSamplerStateDesc.BorderColor[0] = 1.0f;
-	depthSamplerStateDesc.BorderColor[1] = 1.0f;
-	depthSamplerStateDesc.BorderColor[2] = 1.0f;
-	depthSamplerStateDesc.BorderColor[3] = 1.0f;
-
-	res = device_->CreateSamplerState(&depthSamplerStateDesc, &depth_sampler_state_);
-
-
-	CD3D11_RASTERIZER_DESC rastDesc = {};
-	rastDesc.CullMode = D3D11_CULL_BACK;
-	rastDesc.FillMode = D3D11_FILL_SOLID;
-	rastDesc.FrontCounterClockwise = true;
-	rastDesc.DepthClipEnable = true;
-
-	res = device_->CreateRasterizerState(&rastDesc, &rast_state_);
-	context_->RSSetState(rast_state_);
-	
-	//CD3D11_RASTERIZER_DESC shadowRastDesc = {};
-	//shadowRastDesc.CullMode = D3D11_CULL_FRONT;
-	//shadowRastDesc.FillMode = D3D11_FILL_SOLID;
-	//shadowRastDesc.FrontCounterClockwise = true;
-	//shadowRastDesc.DepthClipEnable = false;
-
-	//res = device_->CreateRasterizerState(&shadowRastDesc, &shadow_rast_state_);
-
-	D3D11_DEPTH_STENCIL_DESC defaultDepthDesc = {};
-
-	defaultDepthDesc.DepthEnable = true;
-	defaultDepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	defaultDepthDesc.DepthFunc = D3D11_COMPARISON_LESS;
-
-	res = device_->CreateDepthStencilState(&defaultDepthDesc, &defaultDepthState_);
-
-	D3D11_DEPTH_STENCIL_DESC quadDepthDesc = {};
-
-	defaultDepthDesc.DepthEnable = true;
-	defaultDepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	defaultDepthDesc.DepthFunc = D3D11_COMPARISON_LESS;
-
-	res = device_->CreateDepthStencilState(&quadDepthDesc, &quadDepthState_);
-
 	D3D11_BUFFER_DESC constBufPerSceneDesc = {};
 	constBufPerSceneDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constBufPerSceneDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -602,6 +554,33 @@ void Game::PrepareResources()
 	constBufCascadeDesc.ByteWidth = sizeof(DirectX::SimpleMath::Matrix) * 5 + sizeof(DirectX::SimpleMath::Vector4);
 
 	device_->CreateBuffer(&constBufCascadeDesc, nullptr, &cascadeCBuffer_);
+
+	CD3D11_RASTERIZER_DESC rastDesc = {};
+	rastDesc.CullMode = D3D11_CULL_BACK;
+	rastDesc.FillMode = D3D11_FILL_SOLID;
+	rastDesc.FrontCounterClockwise = true;
+	rastDesc.DepthClipEnable = true;
+
+	res = device_->CreateRasterizerState(&rastDesc, &rast_state_);
+	context_->RSSetState(rast_state_);
+	
+
+	D3D11_DEPTH_STENCIL_DESC defaultDepthDesc = {};
+
+	defaultDepthDesc.DepthEnable = true;
+	defaultDepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	defaultDepthDesc.DepthFunc = D3D11_COMPARISON_LESS;
+
+	res = device_->CreateDepthStencilState(&defaultDepthDesc, &defaultDepthState_);
+
+	D3D11_DEPTH_STENCIL_DESC quadDepthDesc = {};
+
+	defaultDepthDesc.DepthEnable = true;
+	defaultDepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	defaultDepthDesc.DepthFunc = D3D11_COMPARISON_LESS;
+
+	res = device_->CreateDepthStencilState(&quadDepthDesc, &quadDepthState_);
+
 
 	D3D11_BLEND_DESC blendDesc = {};
 

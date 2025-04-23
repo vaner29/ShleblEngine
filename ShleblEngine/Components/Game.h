@@ -53,8 +53,8 @@ public:
 		DirectX::SimpleMath::Vector4 AmbientSpecularPowType; // a - ambient light strength, s - specularity, p - falloff power
 		DirectX::SimpleMath::Matrix T;
 		DirectX::SimpleMath::Matrix ViewMatrix;
-		float gTime;
-		float padding[3];
+		//float gTime;
+		//float padding[3];
 	};
 	struct CbDataCascade
 	{
