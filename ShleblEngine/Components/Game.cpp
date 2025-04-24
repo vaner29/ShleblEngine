@@ -111,8 +111,8 @@ void Game::CreateDepthStencilBuffer()
 void Game::CreateCsmDepthTextureArray()
 {
 	D3D11_TEXTURE2D_DESC depthDescription = {};
-	depthDescription.Width = 1024;
-	depthDescription.Height = 1024;
+	depthDescription.Width = 2048.0f;
+	depthDescription.Height = 2048.0f;
 	depthDescription.ArraySize = 5;
 	depthDescription.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
 	depthDescription.Format = DXGI_FORMAT_R32_TYPELESS;
@@ -279,10 +279,6 @@ void Game::PrepareFrame()
 
 	context_->ClearDepthStencilView(depthShadowDsv_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	//context_->RSSetState(shadow_rast_state_);
-	//context_->VSSetShader(DataProcesser::GetVertexShader("csm"), nullptr, 0);
-	//context_->PSSetShader(nullptr, nullptr, 0);
-	//context_->GSSetShader(DataProcesser::GetGeometryShader("csm"), nullptr, 0);
 
 	for (const auto c : components_)
 	{
@@ -316,6 +312,10 @@ void Game::DestroyResources()
 
 void Game::Draw()
 {
+	float color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	context_->ClearRenderTargetView(render_view_, color);
+	context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
 	context_->ClearState();
 	context_->OMSetDepthStencilState(defaultDepthState_, 0);
 
@@ -325,17 +325,12 @@ void Game::Draw()
 	rtvs[2] = gBuffer_.normalRtv_.Get();
 	context_->OMSetRenderTargets(3, rtvs, depth_stencil_view_);
 
-	constexpr float color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
 	context_->ClearRenderTargetView(gBuffer_.albedoRtv_.Get(), color);
 	context_->ClearRenderTargetView(gBuffer_.positionRtv_.Get(), color);
 	context_->ClearRenderTargetView(gBuffer_.normalRtv_.Get(), color);
 	context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	//context_->PSSetSamplers(0, 1, &sampler_state_);
-	//context_->PSSetSamplers(1, 1, &depth_sampler_state_);
-	//context_->RSSetState(rast_state_);
-	//context_->VSSetShader(DataProcesser::GetVertexShader("base"), nullptr, 0);
-	//context_->PSSetShader(DataProcesser::GetPixelShader("base"), nullptr, 0);
 	for (auto c : components_)
 	{
 		c->Draw();
@@ -366,8 +361,10 @@ void Game::Draw()
 	context_->PSSetShaderResources(1, 1, gBuffer_.positionSrv_.GetAddressOf());
 	context_->PSSetShaderResources(2, 1, gBuffer_.normalSrv_.GetAddressOf());
 	context_->PSSetShaderResources(3, 1, &depthShadowSrv_);
-	context_->PSSetConstantBuffers(0, 1, &sceneConstantBuffer);
-	context_->PSSetConstantBuffers(1, 1, &cascadeCBuffer_);
+
+	context_->VSSetConstantBuffers(1, 1, &sceneConstantBuffer);
+	context_->PSSetConstantBuffers(1, 1, &sceneConstantBuffer);
+	context_->PSSetConstantBuffers(2, 1, &cascadeCBuffer_);
 	context_->PSSetSamplers(0, 1, &depth_sampler_state_);
 
 	context_->Draw(4, 0);
@@ -581,6 +578,18 @@ void Game::PrepareResources()
 
 	res = device_->CreateDepthStencilState(&quadDepthDesc, &quadDepthState_);
 
+	D3D11_SAMPLER_DESC depthSamplerStateDesc = {};
+	depthSamplerStateDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+	depthSamplerStateDesc.ComparisonFunc = D3D11_COMPARISON_GREATER_EQUAL;
+	depthSamplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	depthSamplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	depthSamplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	depthSamplerStateDesc.BorderColor[0] = 1.0f;
+	depthSamplerStateDesc.BorderColor[1] = 1.0f;
+	depthSamplerStateDesc.BorderColor[2] = 1.0f;
+	depthSamplerStateDesc.BorderColor[3] = 1.0f;
+
+	res = device_->CreateSamplerState(&depthSamplerStateDesc, &depth_sampler_state_);
 
 	D3D11_BLEND_DESC blendDesc = {};
 

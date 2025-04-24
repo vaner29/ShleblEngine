@@ -158,8 +158,8 @@ void BaseComponent::PrepareFrame()
 		return;
 
 	D3D11_VIEWPORT viewport;
-	viewport.Width = 1024.0f;
-	viewport.Height = 1024.0f;
+	viewport.Width = 2048.0f;
+	viewport.Height = 2048.0f;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
 	viewport.MinDepth = 0;
@@ -230,7 +230,7 @@ void BaseComponent::Update()
 	objData.worldViewProj = world * game->Camera->GetViewProj();
 	objData.world = world;
 	objData.WorldView = world * game->Camera->GetView();
-	objData.invTrWorld = (world * game->Camera->GetView()).Invert().Transpose();
+	objData.invTrWorld = world.Invert().Transpose();
 	//objData.isSpinningFloor = isSpinningFloor;
 	//objData.diffuseColor = diffuseColor;
 	//objData.specularColor = specularColor;
