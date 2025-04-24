@@ -18,7 +18,7 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
     components_.push_back(ball);
 
     RectangleComponent* quad = new RectangleComponent(this, L"Textures/square.dds");
-    quad->SetRotation(Quaternion::CreateFromAxisAngle(Vector3::Left, XM_PI / 2.0f));
+    quad->SetRotation(Quaternion::CreateFromAxisAngle(Vector3::Right, XM_PI / 2.0f));
     quad->SetScale(Vector3::One * 1000.0f);
     quad->shininess = 0.1f;
     quad->specularColor = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);

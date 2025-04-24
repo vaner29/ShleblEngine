@@ -184,9 +184,7 @@ void BaseComponent::PrepareFrame()
 
 void BaseComponent::DestroyResources()
 {
-	layout_->Release();
-	vertex_buffer_->Release();
-	index_buffer_->Release();
+
 }
 
 void BaseComponent::Draw()
@@ -230,7 +228,7 @@ void BaseComponent::Update()
 	objData.worldViewProj = world * game->Camera->GetViewProj();
 	objData.world = world;
 	objData.WorldView = world * game->Camera->GetView();
-	objData.invTrWorld = world.Invert().Transpose();
+	objData.invTrWorld = (world * game->Camera->GetView()).Invert().Transpose();
 	//objData.isSpinningFloor = isSpinningFloor;
 	//objData.diffuseColor = diffuseColor;
 	//objData.specularColor = specularColor;

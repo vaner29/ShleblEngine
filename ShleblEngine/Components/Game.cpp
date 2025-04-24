@@ -312,10 +312,6 @@ void Game::DestroyResources()
 
 void Game::Draw()
 {
-	float color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	context_->ClearRenderTargetView(render_view_, color);
-	context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
 	context_->ClearState();
 	context_->OMSetDepthStencilState(defaultDepthState_, 0);
 
@@ -325,7 +321,7 @@ void Game::Draw()
 	rtvs[2] = gBuffer_.normalRtv_.Get();
 	context_->OMSetRenderTargets(3, rtvs, depth_stencil_view_);
 
-
+	constexpr float color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	context_->ClearRenderTargetView(gBuffer_.albedoRtv_.Get(), color);
 	context_->ClearRenderTargetView(gBuffer_.positionRtv_.Get(), color);
 	context_->ClearRenderTargetView(gBuffer_.normalRtv_.Get(), color);
@@ -352,7 +348,6 @@ void Game::Draw()
 	context_->RSSetViewports(1, &viewport);
 
 	context_->OMSetRenderTargets(1, &render_view_, nullptr);
-	context_->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 	context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	context_->VSSetShader(DataProcesser::GetVertexShader("lightpass"), nullptr, 0);
@@ -361,61 +356,11 @@ void Game::Draw()
 	context_->PSSetShaderResources(1, 1, gBuffer_.positionSrv_.GetAddressOf());
 	context_->PSSetShaderResources(2, 1, gBuffer_.normalSrv_.GetAddressOf());
 	context_->PSSetShaderResources(3, 1, &depthShadowSrv_);
-
-	context_->VSSetConstantBuffers(1, 1, &sceneConstantBuffer);
-	context_->PSSetConstantBuffers(1, 1, &sceneConstantBuffer);
-	context_->PSSetConstantBuffers(2, 1, &cascadeCBuffer_);
+	context_->PSSetConstantBuffers(0, 1, &sceneConstantBuffer);
+	context_->PSSetConstantBuffers(1, 1, &cascadeCBuffer_);
 	context_->PSSetSamplers(0, 1, &depth_sampler_state_);
 
 	context_->Draw(4, 0);
-
-	context_->OMSetBlendState(blendState_, nullptr, 0xffffffff);
-
-	sceneData_.AmbientSpecularPowType = DirectX::SimpleMath::Vector4(0.4f, 0.5f, 32, 1);
-
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4(3, 1, 3, 1);
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4::Transform(sceneData_.LightPos, Camera->GetView());
-	sceneData_.LightColor = DirectX::SimpleMath::Vector4(1, 0, 0, 1) * 2.0f;
-
-	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
-
-	lightVolumeComponent_->SetSize(10.0f);
-	lightVolumeComponent_->SetPosition(DirectX::SimpleMath::Vector3(3, 1, 3));
-	lightVolumeComponent_->Update();
-	lightVolumeComponent_->Draw();
-
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4(-3, 1, 3, 1);
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4::Transform(sceneData_.LightPos, Camera->GetView());
-	sceneData_.LightColor = DirectX::SimpleMath::Vector4(0, 1, 0, 1) * 2.0f;
-
-	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
-
-	lightVolumeComponent_->SetSize(10.0f);
-	lightVolumeComponent_->SetPosition(DirectX::SimpleMath::Vector3(-3, 1, 3));
-	lightVolumeComponent_->Update();
-	lightVolumeComponent_->Draw();
-
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4(3, 1, -3, 1);
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4::Transform(sceneData_.LightPos, Camera->GetView());
-	sceneData_.LightColor = DirectX::SimpleMath::Vector4(0, 0, 1, 1) * 2.0f;
-
-	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
-
-	lightVolumeComponent_->SetSize(10.0f);
-	lightVolumeComponent_->SetPosition(DirectX::SimpleMath::Vector3(3, 1, -3));
-	lightVolumeComponent_->Update();
-	lightVolumeComponent_->Draw();
-
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4(-3, 1, -3, 1);
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4::Transform(sceneData_.LightPos, Camera->GetView());
-	sceneData_.LightColor = DirectX::SimpleMath::Vector4(1, 1, 1, 1) * 2.0f;
-
-	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
-
-	lightVolumeComponent_->SetSize(10.0f);
-	lightVolumeComponent_->SetPosition(DirectX::SimpleMath::Vector3(-3, 1, -3));
-	lightVolumeComponent_->Update();
-	lightVolumeComponent_->Draw();
 }
 
 void Game::EndFrame()
@@ -553,7 +498,7 @@ void Game::PrepareResources()
 	device_->CreateBuffer(&constBufCascadeDesc, nullptr, &cascadeCBuffer_);
 
 	CD3D11_RASTERIZER_DESC rastDesc = {};
-	rastDesc.CullMode = D3D11_CULL_BACK;
+	rastDesc.CullMode = D3D11_CULL_NONE;
 	rastDesc.FillMode = D3D11_FILL_SOLID;
 	rastDesc.FrontCounterClockwise = true;
 	rastDesc.DepthClipEnable = true;
@@ -591,20 +536,20 @@ void Game::PrepareResources()
 
 	res = device_->CreateSamplerState(&depthSamplerStateDesc, &depth_sampler_state_);
 
-	D3D11_BLEND_DESC blendDesc = {};
+	//D3D11_BLEND_DESC blendDesc = {};
 
-	blendDesc.RenderTarget[0].BlendEnable = true;
-	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE; //D3D11_BLEND_SRC_COLOR;
-	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE; //D3D11_BLEND_BLEND_FACTOR;
-	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;;
-	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
-	blendDesc.AlphaToCoverageEnable = false;
+	//blendDesc.RenderTarget[0].BlendEnable = true;
+	//blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE; //D3D11_BLEND_SRC_COLOR;
+	//blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE; //D3D11_BLEND_BLEND_FACTOR;
+	//blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	//blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	//blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;;
+	//blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	//blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
+	//blendDesc.AlphaToCoverageEnable = false;
 
-	res = device_->CreateBlendState(&blendDesc, &blendState_);
+	//res = device_->CreateBlendState(&blendDesc, &blendState_);
 
-	lightVolumeComponent_->Initialize();
+	//lightVolumeComponent_->Initialize();
 }
 
