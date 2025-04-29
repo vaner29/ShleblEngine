@@ -387,7 +387,10 @@ void Game::Update()
 	sceneData_.LightPos = DirectX::SimpleMath::Vector4::Transform(dLight_.GetDirection(), Camera->GetView());
 	sceneData_.LightPos.Normalize();
 	sceneData_.LightColor = dLight_.GetColor();
-	sceneData_.AmbientSpecularPowType = DirectX::SimpleMath::Vector4(0.4f, 0.5f, 32, 0);
+	sceneData_.Ambient = 0.4f;
+	sceneData_.Specular = 0.5f;
+	sceneData_.Falloff = 32.f;
+	sceneData_.Type = 0.f;
 	sceneData_.T = DirectX::SimpleMath::Matrix(
 		0.5f, 0.0f, 0.0f, 0.0f,
 		0.0f, -0.5f, 0.0f, 0.0f,
@@ -504,7 +507,7 @@ void Game::PrepareResources()
 	rastDesc.DepthClipEnable = true;
 
 	res = device_->CreateRasterizerState(&rastDesc, &rast_state_);
-	context_->RSSetState(rast_state_);
+	//context_->RSSetState(rast_state_);
 	
 
 	D3D11_DEPTH_STENCIL_DESC defaultDepthDesc = {};
@@ -525,7 +528,7 @@ void Game::PrepareResources()
 
 	D3D11_SAMPLER_DESC depthSamplerStateDesc = {};
 	depthSamplerStateDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
-	depthSamplerStateDesc.ComparisonFunc = D3D11_COMPARISON_GREATER_EQUAL;
+	depthSamplerStateDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
 	depthSamplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
 	depthSamplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
 	depthSamplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;

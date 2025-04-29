@@ -124,7 +124,7 @@ void BaseComponent::Initialize()
 
 	D3D11_SAMPLER_DESC depthSamplerStateDesc = {};
 	depthSamplerStateDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
-	depthSamplerStateDesc.ComparisonFunc = D3D11_COMPARISON_GREATER_EQUAL;
+	depthSamplerStateDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
 	depthSamplerStateDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
 	depthSamplerStateDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
 	depthSamplerStateDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
@@ -139,12 +139,6 @@ void BaseComponent::Initialize()
 
 	res = game->device_->CreateRasterizerState(&rastDesc, &rastState_);
 
-	CD3D11_RASTERIZER_DESC shadowRastDesc = CreateRasterizerStateDesc();
-
-	shadowRastDesc.CullMode = D3D11_CULL_FRONT;
-	shadowRastDesc.DepthClipEnable = false;
-
-	res = game->device_->CreateRasterizerState(&shadowRastDesc, &shadowRastState_);
 }
 
 
@@ -156,6 +150,8 @@ void BaseComponent::PrepareFrame()
 {
 	if (!isShadowCasting_)
 		return;
+
+	game->context_->RSSetState(rastState_);
 
 	D3D11_VIEWPORT viewport;
 	viewport.Width = 2048.0f;
@@ -189,7 +185,8 @@ void BaseComponent::DestroyResources()
 
 void BaseComponent::Draw()
 {
-
+	game->context_->RSSetState(rastState_);
+	
 	D3D11_VIEWPORT viewport = {};
 	viewport.Width = static_cast<float>(game->display_->client_width_);
 	viewport.Height = static_cast<float>(game->display_->client_height_);
@@ -228,7 +225,7 @@ void BaseComponent::Update()
 	objData.worldViewProj = world * game->Camera->GetViewProj();
 	objData.world = world;
 	objData.WorldView = world * game->Camera->GetView();
-	objData.invTrWorld = (world * game->Camera->GetView()).Invert().Transpose();
+	objData.invTrWorld = objData.invTrWorld = (isSpinningFloor > 0.5f) ? Matrix::Identity : (Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation)).Invert().Transpose();
 	//objData.isSpinningFloor = isSpinningFloor;
 	//objData.diffuseColor = diffuseColor;
 	//objData.specularColor = specularColor;

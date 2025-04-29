@@ -50,7 +50,10 @@ public:
 	{
 		DirectX::SimpleMath::Vector4 LightPos;
 		DirectX::SimpleMath::Vector4 LightColor;
-		DirectX::SimpleMath::Vector4 AmbientSpecularPowType; // a - ambient light strength, s - specularity, p - falloff power
+		float Ambient;
+		float Specular;
+		float Falloff;
+		float Type;
 		DirectX::SimpleMath::Matrix T;
 		DirectX::SimpleMath::Matrix ViewMatrix;
 		//float gTime;
@@ -88,7 +91,6 @@ public:
 	ID3D11RenderTargetView* render_view_;
 
 	ID3D11RasterizerState* rast_state_;
-	ID3D11RasterizerState* shadow_rast_state_;
 
 	ID3D11DepthStencilState* defaultDepthState_;
 	ID3D11DepthStencilState* quadDepthState_;
