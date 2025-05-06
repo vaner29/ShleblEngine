@@ -9,7 +9,7 @@ CD3D11_RASTERIZER_DESC LightVolume::CreateRasterizerStateDesc()
     return rs;
 }
 
-LightVolume::LightVolume(Game* g) : SphereComponent(g, 1.0f, 16, 16, L"Textures/duck.dds")
+LightVolume::LightVolume(Game* g) : SphereComponent(g, 1.0f, 16, 16, L"Textures/dingus.dds")
 {
     isShadowCasting_ = false;
 }
@@ -21,6 +21,8 @@ void LightVolume::SetSize(float size)
 
 void LightVolume::Draw()
 {
+    auto rastDesc = CreateRasterizerStateDesc();
+    game->device_->CreateRasterizerState(&rastDesc, &rastState_);
     game->context_->RSSetState(rastState_); //TODO: Solve for moving that somewhere
 
     game->context_->IASetInputLayout(layout_);

@@ -35,6 +35,8 @@ private:
 	void UpdateTimer();
 	void CreateCsmDepthTextureArray();
 
+	void CreateSpotlightShadowMap();
+
 protected:
 	virtual void SetBackgroundColor();
 	virtual void DestroyResources();
@@ -56,6 +58,10 @@ public:
 		float Type;
 		DirectX::SimpleMath::Matrix T;
 		DirectX::SimpleMath::Matrix ViewMatrix;
+		DirectX::SimpleMath::Vector4 SpotlightDirection; // Spotlight direction
+		float SpotlightConeAngle;                        // Cosine of cone angle
+		float SpotlightRange;                            // Maximum range
+		float Padding[2];                                // Align to 16 bytes
 		//float gTime;
 		//float padding[3];
 	};
@@ -98,6 +104,10 @@ public:
 	ID3D11SamplerState* sampler_state_;
 	ID3D11SamplerState* depth_sampler_state_;
 	ID3D11BlendState* blendState_;
+
+	ID3D11Texture2D* spotlightShadowTex_;
+	ID3D11DepthStencilView* spotlightShadowDsv_;
+	ID3D11ShaderResourceView* spotlightShadowSrv_;
 
 	ID3D11Texture2D* shadowTexArr_;
 	ID3D11DepthStencilView* depthShadowDsv_;

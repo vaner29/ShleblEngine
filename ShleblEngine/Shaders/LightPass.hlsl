@@ -20,6 +20,10 @@ cbuffer cbPerScene : register(b0)
     float typeV;
 	float4x4 gT;
 	float4x4 gView;
+    float4 SpotlightDirection; // Spotlight direction (normalized)
+    float SpotlightConeAngle; // Cosine of the cone angle
+    float SpotlightRange; // Maximum range of the spotlight
+    float2 Padding; // Align to 16 bytes
 };
 
 cbuffer cbCascade : register(b1)
@@ -91,39 +95,47 @@ float ShadowCalculation(float4 posWorldSpace, float4 posViewSpace, float dotN)
 
 float4 PSMain(PS_IN input) : SV_Target
 {
-	float3 norm = normalize(Normals.Load(int3(input.pos.xy, 0)));
-	float4 worldPos = float4(WorldPositions.Load(int3(input.pos.xy, 0)).xyz, 1.0f);
-	float4 viewPos = mul(worldPos, gView);
-	float3 viewDir = normalize(-viewPos.xyz);
-	float4 objColor = float4(DiffuseTex.Load(int3(input.pos.xy, 0)).xyz, 1.0f);
+    float3 norm = normalize(Normals.Load(int3(input.pos.xy, 0)));
+    float4 worldPos = float4(WorldPositions.Load(int3(input.pos.xy, 0)).xyz, 1.0f);
+    float4 viewPos = mul(worldPos, gView);
+    float3 viewDir = normalize(-viewPos.xyz);
+    float4 objColor = float4(DiffuseTex.Load(int3(input.pos.xy, 0)).xyz, 1.0f);
 
-	float shadow = 0.0f;
-	float attenuation = 1.0f;
-	float3 lightDir = float3(0.0f, 0.0f, 0.0f);
+    float shadow = 0.0f;
+    float attenuation = 1.0f;
+    float3 lightDir = float3(0.0f, 0.0f, 0.0f);
 
-	[branch]
-	if (typeV == 0)
-	{
-		lightDir = normalize(lightPos.xyz);
-		shadow = ShadowCalculation(worldPos, viewPos, dot(norm, lightPos));
-	}
-	else
-	{
-		lightDir = lightPos.xyz - viewPos.xyz;
-        attenuation = 1.0f / (1.0f + length(lightDir) * length(lightDir));
-		lightDir = normalize(lightDir);
-	}
-	
-	float4 ambient = ambientV * float4(lightColor.xyz, 1.0f) * attenuation;
+    [branch]
+    if (typeV == 0) // Directional light
+    {
+        lightDir = normalize(lightPos.xyz);
+        shadow = ShadowCalculation(worldPos, viewPos, dot(norm, lightDir));
+    }
+    else if (typeV == 1) // Spotlight
+    {
+        float3 toLight = lightPos.xyz - worldPos.xyz;
+        float distance = length(toLight);
+        if (distance > SpotlightRange)
+            return float4(0, 0, 0, 0); // Outside range
 
-	float diff = max(dot(norm, lightDir), 0.0f) * attenuation;
-	float4 diffuse = diff * float4(lightColor.xyz, 1.0f);
-	
-	float3 reflectDir = reflect(-lightDir, norm);
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0f), falloffV) * attenuation;
-	float4 specular = objColor.w * spec * float4(lightColor.xyz, 1.0f);
-	
-	float4 result = (ambient + (shadow) * (diffuse + specular)) * objColor;
-	
-	return float4(result.xyz, 1.0f);
+        lightDir = toLight / distance;
+        float spotFactor = dot(lightDir, -SpotlightDirection.xyz);
+        if (spotFactor < SpotlightConeAngle)
+            return float4(0, 0, 0, 0); // Outside cone
+
+        attenuation = 1.0f / (1.0f + distance * distance);
+        // Optional: Add falloff based on spotFactor
+        // attenuation *= pow(spotFactor, falloffV);
+    }
+
+    float4 ambient = ambientV * float4(lightColor.xyz, 1.0f) * objColor;
+    float diff = max(dot(norm, lightDir), 0.0f) * attenuation;
+    float4 diffuse = diff * float4(lightColor.xyz, 1.0f) * objColor;
+
+    float3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0f), falloffV) * attenuation;
+    float4 specular = specularV * spec * float4(lightColor.xyz, 1.0f);
+
+    float4 result = ambient + (typeV == 0 ? shadow : 1.0f) * (diffuse + specular);
+    return float4(result.xyz, 1.0f);
 }

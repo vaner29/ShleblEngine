@@ -29,7 +29,10 @@ cbuffer cbPerScene : register(b0)
 {
     float4 gLightPos;
     float4 gLightColor;
-    float4 ambientSpecularPowType;
+    float ambientV;
+    float specularV;
+    float falloffV;
+    float typeV;
     float4x4 gT;
     float4x4 gView;
 };
@@ -50,7 +53,7 @@ PS_IN VSMain(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
 	
-    output.pos = mul(float4(input.pos.xyz, 1.0f), gWorldViewProj);
+    output.pos = float4(output.tex * float2(2, -2) + float2(-1, 1), 0, 1);
 	
     return output;
 }
@@ -126,7 +129,7 @@ float4 PSMain(PS_IN input) : SV_Target
     float3 lightDir = float3(0.0f, 0.0f, 0.0f);
 
 	[branch]
-    if (ambientSpecularPowType.w == 0)
+    if (typeV == 0)
     {
         lightDir = normalize(gLightPos.xyz);
         shadow = ShadowCalculation(worldPos, viewPos, dot(norm, gLightPos));
@@ -138,13 +141,13 @@ float4 PSMain(PS_IN input) : SV_Target
         lightDir = normalize(lightDir);
     }
 	
-    float4 ambient = ambientSpecularPowType.x * float4(gLightColor.xyz, 1.0f) * attenuation;
+    float4 ambient = ambientV * float4(gLightColor.xyz, 1.0f) * attenuation;
 
     float diff = max(dot(norm, lightDir), 0.0f) * attenuation;
     float4 diffuse = diff * float4(gLightColor.xyz, 1.0f);
 	
     float3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0f), ambientSpecularPowType.z) * attenuation;
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0f), falloffV) * attenuation;
     float4 specular = objColor.w * spec * float4(gLightColor.xyz, 1.0f);
 	
     float4 result = (ambient + (1.0f - shadow) * (diffuse + specular)) * objColor;

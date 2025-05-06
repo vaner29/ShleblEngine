@@ -24,6 +24,14 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
     quad->specularColor = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
     components_.push_back(quad);
 
+    RectangleComponent* quadWall = new RectangleComponent(this, L"Textures/square.dds");
+    //quad->SetRotation(Quaternion::CreateFromAxisAngle(Vector3::Right, -XM_PI / 2.0f));
+    quadWall->SetPosition(DirectX::SimpleMath::Vector3(0.0f, 0.0f, -100.0f));
+    quadWall->SetScale(Vector3::One * 1000.0f);
+    quadWall->shininess = 0.1f;
+    quadWall->specularColor = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
+    components_.push_back(quadWall);
+
     for (int i = 0; i < 10; ++i)
     {
         KatamariTrash* cat = new KatamariTrash(this, "Models/maxwell.obj", L"Textures/dingus_nowhiskers.dds", 1.3f, Vector3(0.0f, 0.0f, 0.0f));

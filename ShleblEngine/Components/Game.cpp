@@ -162,6 +162,8 @@ void Game::CreateCsmDepthTextureArray()
 	}
 }
 
+
+
 void Game::CreateBackBuffer()
 {
 	auto res = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer_));	// __uuidof(ID3D11Texture2D)
@@ -363,57 +365,24 @@ void Game::Draw()
 
 	context_->Draw(4, 0);
 
-	context_->OMSetBlendState(blendState_, nullptr, 0xffffffff);
-
+	context_->OMSetBlendState(blendState_, nullptr, 0xffffffff); // Additive blending
 	sceneData_.Ambient = 0.4f;
 	sceneData_.Specular = 0.5f;
 	sceneData_.Falloff = 32;
-	sceneData_.Type = 1;
-
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4(3, 1, 3, 1);
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4::Transform(sceneData_.LightPos, Camera->GetView());
-	sceneData_.LightColor = DirectX::SimpleMath::Vector4(1, 0, 0, 1) * 2.0f;
-
+	sceneData_.Type = 1.0f; // Spotlight
+	sceneData_.LightPos = DirectX::SimpleMath::Vector4(0.0f, 0.0f, 0.0f, 1.0f); // Position in world space
+	sceneData_.LightColor = DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f); // Red light
+	sceneData_.SpotlightDirection = DirectX::SimpleMath::Vector4(0.0f, 0.0f, -1.0f, 0.0f); // Downward
+	sceneData_.SpotlightConeAngle = cosf(DirectX::XM_1DIVPI); // 45-degree cone (cos(45°))
+	sceneData_.SpotlightRange = 1000.0f; // 10 units range
 	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
-
-	lightVolumeComponent_->SetSize(10.0f);
-	lightVolumeComponent_->SetPosition(DirectX::SimpleMath::Vector3(3, 1, 3));
-	lightVolumeComponent_->Update();
-	lightVolumeComponent_->Draw();
+	context_->Draw(4, 0);
 
 
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4(-3, 1, 3, 1);
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4::Transform(sceneData_.LightPos, Camera->GetView());
-	sceneData_.LightColor = DirectX::SimpleMath::Vector4(0, 1, 0, 1) * 2.0f;
+	//lightVolumeComponent_->SetSize(100.0f); // Scale to range
+	//lightVolumeComponent_->SetPosition(DirectX::SimpleMath::Vector3(0.0f, 15.0f, 0.0f));
+	//lightVolumeComponent_->Draw();
 
-	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
-
-	lightVolumeComponent_->SetSize(10.0f);
-	lightVolumeComponent_->SetPosition(DirectX::SimpleMath::Vector3(-3, 1, 3));
-	lightVolumeComponent_->Update();
-	lightVolumeComponent_->Draw();
-
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4(3, 1, -3, 1);
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4::Transform(sceneData_.LightPos, Camera->GetView());
-	sceneData_.LightColor = DirectX::SimpleMath::Vector4(0, 0, 1, 1) * 2.0f;
-
-	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
-
-	lightVolumeComponent_->SetSize(10.0f);
-	lightVolumeComponent_->SetPosition(DirectX::SimpleMath::Vector3(3, 1, -3));
-	lightVolumeComponent_->Update();
-	lightVolumeComponent_->Draw();
-
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4(-3, 1, -3, 1);
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4::Transform(sceneData_.LightPos, Camera->GetView());
-	sceneData_.LightColor = DirectX::SimpleMath::Vector4(1, 1, 1, 1) * 2.0f;
-
-	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
-
-	lightVolumeComponent_->SetSize(10.0f);
-	lightVolumeComponent_->SetPosition(DirectX::SimpleMath::Vector3(-3, 1, -3));
-	lightVolumeComponent_->Update();
-	lightVolumeComponent_->Draw();
 }
 
 void Game::EndFrame()
@@ -434,6 +403,8 @@ void Game::Initialize()
 void Game::Update()
 {
 	CBDataPerScene sceneData_ = {};
+
+	// Existing directional light setup
 	auto tmp = DirectX::SimpleMath::Vector4(20.0f, 50.0f, 20.0f, 0.0f);
 	tmp.Normalize();
 	dLight_.SetDirection(tmp);
@@ -442,8 +413,8 @@ void Game::Update()
 	sceneData_.LightColor = dLight_.GetColor();
 	sceneData_.Ambient = 0.4f;
 	sceneData_.Specular = 0.5f;
-	sceneData_.Falloff = 32.f;
-	sceneData_.Type = 0.f;
+	sceneData_.Falloff = 32.0f;
+	sceneData_.Type = 0.0f;
 	sceneData_.T = DirectX::SimpleMath::Matrix(
 		0.5f, 0.0f, 0.0f, 0.0f,
 		0.0f, -0.5f, 0.0f, 0.0f,
