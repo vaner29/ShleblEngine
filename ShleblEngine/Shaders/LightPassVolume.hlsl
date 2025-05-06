@@ -15,7 +15,6 @@ struct PS_IN
 {
     float4 pos : SV_POSITION;
     float2 tex : TEXCOORD;
-    float2 screenPos : SCREENPOS; // Add this
 };
 
 cbuffer cbPerObject : register(b0)
@@ -26,7 +25,7 @@ cbuffer cbPerObject : register(b0)
     float4x4 gInvTrWorldView;
 };
 
-cbuffer cbPerScene : register(b1)
+cbuffer cbPerScene : register(b0)
 {
     float4 gLightPos;
     float4 gLightColor;
@@ -35,7 +34,7 @@ cbuffer cbPerScene : register(b1)
     float4x4 gView;
 };
 
-cbuffer cbCascade : register(b2)
+cbuffer cbCascade : register(b1)
 {
     float4x4 gViewProj[CASCADE_COUNT + 1];
     float4 gDistances;
@@ -50,9 +49,9 @@ SamplerComparisonState DepthSampler : register(s0);
 PS_IN VSMain(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
+	
     output.pos = mul(float4(input.pos.xyz, 1.0f), gWorldViewProj);
-    output.tex = mul(float4(output.pos.xyz, 1.0f), gT).xy; // Texture coords if needed
-    output.screenPos = output.pos.xy; // Pass clip-space position
+	
     return output;
 }
 
@@ -113,14 +112,14 @@ float ShadowCalculation(float4 posWorldSpace, float4 posViewSpace, float dotN)
 
 float4 PSMain(PS_IN input) : SV_Target
 {
-    float2 pixelCoord = input.screenPos.xy * float2(400, 400) + float2(400, 400); // For 800x800
-    int2 sampleCoord = int2(pixelCoord);
-
-    float3 norm = normalize(Normals.Load(int3(sampleCoord, 0)));
-    float4 worldPos = float4(WorldPositions.Load(int3(sampleCoord, 0)).xyz, 1.0f);
+    input.tex = mul(float4(input.pos.xyz, 1.0f), gT).xy;
+    input.pos = float4(input.tex * float2(2, -2) + float2(-1, 1), 0, 1);
+	
+    float3 norm = normalize(Normals.Load(int3(input.pos.xy, 0)));
+    float4 worldPos = float4(WorldPositions.Load(int3(input.pos.xy, 0)).xyz, 1.0f);
     float4 viewPos = mul(worldPos, gView);
     float3 viewDir = normalize(-viewPos.xyz);
-    float4 objColor = float4(DiffuseTex.Load(int3(sampleCoord, 0)).xyz, 1.0f);
+    float4 objColor = float4(DiffuseTex.Load(int3(input.pos.xy, 0)).xyz, 1.0f);
 
     float shadow = 0.0f;
     float attenuation = 1.0f;

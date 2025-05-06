@@ -73,15 +73,6 @@ float ShadowCalculation(float4 posWorldSpace, float4 posViewSpace, float dotN)
         return 0.0f;
     }
 
-    //float bias = max(0.001f * (1.0f - dotN), 0.0001f);
-    //if (layer == CASCADE_COUNT)
-    //{
-    //    bias *= 1 / 1000.0f;
-    //}
-    //else
-    //{
-    //    bias *= gDistances[layer] / 1000.0f;
-    //}
 
     // PCF
     float shadow = 0.0f;
@@ -101,24 +92,38 @@ float ShadowCalculation(float4 posWorldSpace, float4 posViewSpace, float dotN)
 float4 PSMain(PS_IN input) : SV_Target
 {
 	float3 norm = normalize(Normals.Load(int3(input.pos.xy, 0)));
-	
-	float4 ambient = ambientV * float4(lightColor.xyz, 1.0f);
+	float4 worldPos = float4(WorldPositions.Load(int3(input.pos.xy, 0)).xyz, 1.0f);
+	float4 viewPos = mul(worldPos, gView);
+	float3 viewDir = normalize(-viewPos.xyz);
 	float4 objColor = float4(DiffuseTex.Load(int3(input.pos.xy, 0)).xyz, 1.0f);
 
-	float diff = max(dot(norm, lightPos.xyz), 0.0f);
-	float4 diffuse = diff * float4(lightColor.xyz, 1.0f);
+	float shadow = 0.0f;
+	float attenuation = 1.0f;
+	float3 lightDir = float3(0.0f, 0.0f, 0.0f);
 
-	float3 reflectDir = reflect(-lightPos.xyz, norm);
-	float4 worldPos = float4(WorldPositions.Load(int3(input.pos.xy, 0)).xyz, 1.0f);
-	float3 viewDir = normalize(-mul(worldPos, gView).xyz);
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0f), falloffV);
-	float4 specular = objColor.w * spec * float4(lightColor.xyz, 1.0f);
-
-	float shadow = ShadowCalculation(worldPos, mul(worldPos, gView), dot(norm, lightPos));
-
-	float4 result = (ambient + (shadow) * (diffuse + specular)) * objColor;
+	[branch]
+	if (typeV == 0)
+	{
+		lightDir = normalize(lightPos.xyz);
+		shadow = ShadowCalculation(worldPos, viewPos, dot(norm, lightPos));
+	}
+	else
+	{
+		lightDir = lightPos.xyz - viewPos.xyz;
+        attenuation = 1.0f / (1.0f + length(lightDir) * length(lightDir));
+		lightDir = normalize(lightDir);
+	}
 	
-	//return float4(viewDir.xyz*0.5 + 0.5, 1.0f);
+	float4 ambient = ambientV * float4(lightColor.xyz, 1.0f) * attenuation;
+
+	float diff = max(dot(norm, lightDir), 0.0f) * attenuation;
+	float4 diffuse = diff * float4(lightColor.xyz, 1.0f);
+	
+	float3 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0f), falloffV) * attenuation;
+	float4 specular = objColor.w * spec * float4(lightColor.xyz, 1.0f);
+	
+	float4 result = (ambient + (shadow) * (diffuse + specular)) * objColor;
 	
 	return float4(result.xyz, 1.0f);
 }
