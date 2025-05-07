@@ -370,10 +370,10 @@ void Game::Draw()
 	sceneData_.Specular = 0.5f;
 	sceneData_.Falloff = 32;
 	sceneData_.Type = 1.0f; // Spotlight
-	sceneData_.LightPos = DirectX::SimpleMath::Vector4(0.0f, 0.0f, 0.0f, 1.0f); // Position in world space
+	sceneData_.LightPos = spotLightPos;
 	sceneData_.LightColor = DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f); // Red light
-	sceneData_.SpotlightDirection = DirectX::SimpleMath::Vector4(0.0f, 0.0f, -1.0f, 0.0f); // Downward
-	sceneData_.SpotlightConeAngle = cosf(DirectX::XM_1DIVPI); // 45-degree cone (cos(45°))
+	sceneData_.SpotlightDirection = spotLightDir;
+	sceneData_.SpotlightConeAngle = cosf(DirectX::XM_1DIVPI/2.0f);
 	sceneData_.SpotlightRange = 1000.0f; // 10 units range
 	context_->UpdateSubresource(sceneConstantBuffer, 0, nullptr, &sceneData_, 0, 0);
 	context_->Draw(4, 0);

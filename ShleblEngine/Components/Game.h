@@ -113,6 +113,9 @@ public:
 	ID3D11DepthStencilView* depthShadowDsv_;
 	ID3D11ShaderResourceView* depthShadowSrv_;
 
+	DirectX::SimpleMath::Vector4 spotLightPos = DirectX::SimpleMath::Vector4(0.0f, 0.0f, 100.0f, 1.0f);
+	DirectX::SimpleMath::Vector4 spotLightDir = DirectX::SimpleMath::Vector4(0.0f, 0.0f, -1.0f, 0.0f);
+
 	IDXGISwapChain* swap_chain_;
 	float totalest_time_ = 0.0f;
 	float total_time_;

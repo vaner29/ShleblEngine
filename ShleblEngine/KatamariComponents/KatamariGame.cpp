@@ -116,6 +116,8 @@ void KatamariGame::Update()
     if (input_dev_->IsKeyDown(Keys::D))
         //dir += (CameraController->GetForward()).Cross(CameraController->GetUp());
         dir += (Camera->Target - Camera->Position).Cross(Camera->Up);
+    if (input_dev_->IsKeyDown(Keys::E))
+        SetSpotlightDir();
     if (dir.Length() > 0.0f)
         ball->SetDirection(dir);
 
@@ -182,73 +184,73 @@ void KatamariGame::Update()
 //    }
 //}
 
-//void KatamariGame::Initialize()
-//{
-//    //pointLights.resize(100);
-//    //lightSpheres.resize(100);
-//    //for (int i = 0; i < 100; i++) {
-//    //    pointLights[i].position = lightPoolPosition;
-//    //    lightSpheres[i] = new SphereComponent(this, 0.2f, 16, 16, L"Textures/slime.dds");
-//    //    lightSpheres[i]->SetPosition(lightPoolPosition);
-//    //    components_.push_back(lightSpheres[i]);
-//    //}
-//    input_dev_->KeyPressed.AddLambda([this](Keys key) {
-//        if (key == Keys::E) {
-//            ShootPointLight();
-//        }
-//        });
-//
-//    input_dev_->KeyPressed.AddLambda([this](Keys key) {
-//        if (key == Keys::Space) {
-//            isDebug = !isDebug;
-//        }
-//        });
-//
-//    //// Initialize shadow map texture array
-//    //D3D11_TEXTURE2D_DESC shadowTexDesc = {};
-//    //shadowTexDesc.Width = ShadowMapSize;
-//    //shadowTexDesc.Height = ShadowMapSize;
-//    //shadowTexDesc.MipLevels = 1;
-//    //shadowTexDesc.ArraySize = NumCascades * 4; // 4 lights, 4 cascades each
-//    //shadowTexDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-//    //shadowTexDesc.SampleDesc.Count = 1;
-//    //shadowTexDesc.SampleDesc.Quality = 0;
-//    //shadowTexDesc.Usage = D3D11_USAGE_DEFAULT;
-//    //shadowTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-//    //shadowTexDesc.CPUAccessFlags = 0;
-//    //shadowTexDesc.MiscFlags = 0;
-//    //device_->CreateTexture2D(&shadowTexDesc, nullptr, &shadowMapTexture);
-//
-//    //// Create DSVs for each cascade (for first 4 lights)
-//    //D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-//    //dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-//    //dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-//    //dsvDesc.Texture2DArray.MipSlice = 0;
-//    //dsvDesc.Texture2DArray.ArraySize = 1; // One slice per DSV
-//    //for (int i = 0; i < NumCascades; i++) {
-//    //    dsvDesc.Texture2DArray.FirstArraySlice = i; // Each cascade gets its own slice
-//    //    device_->CreateDepthStencilView(shadowMapTexture, &dsvDesc, &shadowMapDSVs[i]);
-//    //}
-//
-//    //// Create SRV for the entire texture array
-//    //D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-//    //srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-//    //srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-//    //srvDesc.Texture2DArray.MostDetailedMip = 0;
-//    //srvDesc.Texture2DArray.MipLevels = 1;
-//    //srvDesc.Texture2DArray.FirstArraySlice = 0;
-//    //srvDesc.Texture2DArray.ArraySize = NumCascades * 4;
-//    //device_->CreateShaderResourceView(shadowMapTexture, &srvDesc, &shadowMapSRV);
-//
-//    //// Depth stencil state for shadow rendering
-//    //D3D11_DEPTH_STENCIL_DESC dsDesc = {};
-//    //dsDesc.DepthEnable = TRUE;
-//    //dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-//    //dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-//    //device_->CreateDepthStencilState(&dsDesc, &shadowDepthState);
-//
-//    Game::Initialize();
-//}
+void KatamariGame::Initialize()
+{
+    //pointLights.resize(100);
+    //lightSpheres.resize(100);
+    //for (int i = 0; i < 100; i++) {
+    //    pointLights[i].position = lightPoolPosition;
+    //    lightSpheres[i] = new SphereComponent(this, 0.2f, 16, 16, L"Textures/slime.dds");
+    //    lightSpheres[i]->SetPosition(lightPoolPosition);
+    //    components_.push_back(lightSpheres[i]);
+    //}
+    //input_dev_->KeyPressed.AddLambda([this](Keys key) {
+    //    if (key == Keys::E) {
+    //        SetSpotlightDir();
+    //    }
+    //    });
+
+    //input_dev_->KeyPressed.AddLambda([this](Keys key) {
+    //    if (key == Keys::Space) {
+    //        isDebug = !isDebug;
+    //    }
+    //    });
+
+    //// Initialize shadow map texture array
+    //D3D11_TEXTURE2D_DESC shadowTexDesc = {};
+    //shadowTexDesc.Width = ShadowMapSize;
+    //shadowTexDesc.Height = ShadowMapSize;
+    //shadowTexDesc.MipLevels = 1;
+    //shadowTexDesc.ArraySize = NumCascades * 4; // 4 lights, 4 cascades each
+    //shadowTexDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+    //shadowTexDesc.SampleDesc.Count = 1;
+    //shadowTexDesc.SampleDesc.Quality = 0;
+    //shadowTexDesc.Usage = D3D11_USAGE_DEFAULT;
+    //shadowTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+    //shadowTexDesc.CPUAccessFlags = 0;
+    //shadowTexDesc.MiscFlags = 0;
+    //device_->CreateTexture2D(&shadowTexDesc, nullptr, &shadowMapTexture);
+
+    //// Create DSVs for each cascade (for first 4 lights)
+    //D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+    //dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    //dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+    //dsvDesc.Texture2DArray.MipSlice = 0;
+    //dsvDesc.Texture2DArray.ArraySize = 1; // One slice per DSV
+    //for (int i = 0; i < NumCascades; i++) {
+    //    dsvDesc.Texture2DArray.FirstArraySlice = i; // Each cascade gets its own slice
+    //    device_->CreateDepthStencilView(shadowMapTexture, &dsvDesc, &shadowMapDSVs[i]);
+    //}
+
+    //// Create SRV for the entire texture array
+    //D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    //srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+    //srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+    //srvDesc.Texture2DArray.MostDetailedMip = 0;
+    //srvDesc.Texture2DArray.MipLevels = 1;
+    //srvDesc.Texture2DArray.FirstArraySlice = 0;
+    //srvDesc.Texture2DArray.ArraySize = NumCascades * 4;
+    //device_->CreateShaderResourceView(shadowMapTexture, &srvDesc, &shadowMapSRV);
+
+    //// Depth stencil state for shadow rendering
+    //D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+    //dsDesc.DepthEnable = TRUE;
+    //dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    //dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+    //device_->CreateDepthStencilState(&dsDesc, &shadowDepthState);
+
+    Game::Initialize();
+}
 
 //void KatamariGame::Draw()
 //{
@@ -294,6 +296,32 @@ void KatamariGame::ShootPointLight()
             break;
         }
     }
+}
+
+void KatamariGame::SetSpotlightDir()
+{
+    // Assuming Camera->Position and Camera->Target are available
+    DirectX::SimpleMath::Vector3 camPos = Camera->Position;
+    DirectX::SimpleMath::Vector3 camDir = (Camera->Target - Camera->Position);
+    camDir.Normalize(); // Ensure the direction is normalized
+
+
+    // Compute intersection with plane z = -100
+    float dz = camDir.z;
+    DirectX::SimpleMath::Vector3 wallTarget;
+    if (abs(dz) < 0.0001f) {
+        // Ray is parallel to the plane, default to a fallback point or skip
+        wallTarget = DirectX::SimpleMath::Vector3(camPos.x, camPos.y, -100.0f);
+    }
+    else {
+        float t = (-100.0f - camPos.z) / dz;
+        wallTarget = camPos + t * camDir; // Intersection point
+    }
+
+    // Compute spotlight direction
+    DirectX::SimpleMath::Vector3 spotLightDirVec = wallTarget - spotLightPos;
+    spotLightDirVec.Normalize();
+    spotLightDir = DirectX::SimpleMath::Vector4(spotLightDirVec.x, spotLightDirVec.y, spotLightDirVec.z, 0.0f);
 }
 
 //void KatamariGame::UpdateObjectLights(GameComponent* obj)
