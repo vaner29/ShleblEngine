@@ -121,7 +121,7 @@ void KatamariGame::Update()
     if (dir.Length() > 0.0f)
         ball->SetDirection(dir);
 
-    std::cout << ball->GetPosition().x << " " << ball->GetPosition().y << " " << ball->GetPosition().z << " " << std::endl;
+    //std::cout << ball->GetPosition().x << " " << ball->GetPosition().y << " " << ball->GetPosition().z << " " << std::endl;
 
     //ball->Update();
     //for (auto object : furniture)
@@ -300,6 +300,44 @@ void KatamariGame::ShootPointLight()
 
 void KatamariGame::SetSpotlightDir()
 {
+    Vector2 mousePos = input_dev_->MousePosition;
+    std::cout << mousePos.x << " " << mousePos.y << std::endl;
+
+    float ndcX = (2.0f * mousePos.x) / display_->client_width_ - 1.0f;
+    float ndcY = 1.0f - (2.0f * mousePos.y) / display_->client_height_;
+    std::cout << ndcX << " " << ndcY << std::endl;
+
+    Vector4 nearPointNDC(ndcX, ndcY, 0.0f, 1.0f);
+    Vector4 farPointNDC(ndcX, ndcY, 1.0f, 1.0f);
+
+    Matrix invProj = Camera->GetProj().Invert();
+    Vector4 nearPointView = Vector4::Transform(nearPointNDC, invProj);
+    Vector4 farPointView = Vector4::Transform(farPointNDC, invProj);
+    nearPointView /= nearPointView.w;
+    farPointView /= farPointView.w;
+
+    Matrix invView = Camera->GetView().Invert();
+    Vector4 nearPointWorld = Vector4::Transform(nearPointView, invView);
+    Vector4 farPointWorld = Vector4::Transform(farPointView, invView);
+
+    Vector3 rayOrigin(nearPointWorld.x, nearPointWorld.y, nearPointWorld.z);
+    Vector3 rayDirection = Vector3(farPointWorld.x - nearPointWorld.x,
+        farPointWorld.y - nearPointWorld.y,
+        farPointWorld.z - nearPointWorld.z);
+    rayDirection.Normalize();
+
+    float planeZ = -100.0f;
+    float t = (planeZ - rayOrigin.z) / rayDirection.z;
+    if (t < 0) return; // No intersection or behind the camera
+
+    Vector3 intersectionPoint = rayOrigin + t * rayDirection;
+
+    Vector3 spotLightPosVec(spotLightPos.x, spotLightPos.y, spotLightPos.z);
+    Vector3 spotLightDirVec = intersectionPoint - spotLightPosVec;
+    spotLightDirVec.Normalize();
+    spotLightDir = Vector4(spotLightDirVec.x, spotLightDirVec.y, spotLightDirVec.z, 0.0f);
+
+    /* OLD REALISATION
     // Assuming Camera->Position and Camera->Target are available
     DirectX::SimpleMath::Vector3 camPos = Camera->Position;
     DirectX::SimpleMath::Vector3 camDir = (Camera->Target - Camera->Position);
@@ -322,6 +360,7 @@ void KatamariGame::SetSpotlightDir()
     DirectX::SimpleMath::Vector3 spotLightDirVec = wallTarget - spotLightPos;
     spotLightDirVec.Normalize();
     spotLightDir = DirectX::SimpleMath::Vector4(spotLightDirVec.x, spotLightDirVec.y, spotLightDirVec.z, 0.0f);
+    */
 }
 
 //void KatamariGame::UpdateObjectLights(GameComponent* obj)
