@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -139,6 +139,7 @@
     <ClCompile Include="KatamariComponents\KatamariBall.cpp" />
     <ClCompile Include="KatamariComponents\KatamariTrash.cpp" />
     <ClCompile Include="Components\LightVolume.cpp" />
+    <ClCompile Include="Particles\ParticleSystem.cpp" />
     <ClCompile Include="Tools\DataProcesser.cpp" />
     <ClCompile Include="Dependencies\Delegates.cpp" />
     <ClCompile Include="Components\DisplayWin32.cpp" />
@@ -158,6 +159,27 @@
     <ClCompile Include="Components\SpaceShip.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Shaders\Particles.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">True</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\ParticlesSim.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\ParticlesTex.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Shaders\RectangleShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
@@ -178,6 +200,7 @@
     <ClInclude Include="Components\ObjectComponent.h" />
     <ClInclude Include="Dependencies\DDSTextureLoader.h" />
     <ClInclude Include="Dependencies\DDS.h" />
+    <ClInclude Include="Dependencies\magic_enum.hpp" />
     <ClInclude Include="Dependencies\PlatformHelpers.h" />
     <ClInclude Include="Dependencies\LoaderHelpers.h" />
     <ClInclude Include="Dependencies\DirectXHelpers.h" />
@@ -187,6 +210,7 @@
     <ClInclude Include="KatamariComponents\KatamariBall.h" />
     <ClInclude Include="KatamariComponents\KatamariTrash.h" />
     <ClInclude Include="Components\LightVolume.h" />
+    <ClInclude Include="Particles\ParticleSystem.h" />
     <ClInclude Include="Tools\DataProcesser.h" />
     <ClInclude Include="Dependencies\Delegates.h" />
     <ClInclude Include="Components\DisplayWin32.h" />

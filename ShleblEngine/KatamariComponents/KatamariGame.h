@@ -5,6 +5,7 @@
 
 class KatamariTrash;
 class KatamariBall;
+class ParticleSystem;
 
 struct PointLight {
     DirectX::SimpleMath::Vector3 position;
@@ -28,6 +29,8 @@ protected:
 public:
     std::vector<PointLight> pointLights;
     KatamariBall* ball;
+    ParticleSystem* cloudPartSys;
+    ParticleSystem* rainPartSys;
     std::vector<KatamariTrash*> furniture{};
     KatamariGame();
     void Update() override;

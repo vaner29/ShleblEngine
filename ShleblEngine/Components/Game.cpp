@@ -189,6 +189,10 @@ Game::~Game()
 	{
 		delete c;
 	}
+	for (const auto c : transparentComponents_)
+	{
+		c->~GameComponent();
+	}
 	lightVolumeComponent_->~LightVolume();
 }
 
@@ -286,6 +290,10 @@ void Game::PrepareFrame()
 	{
 		c->PrepareFrame();
 	}
+	for (const auto c : transparentComponents_)
+	{
+		c->PrepareFrame();
+	}
 }
 
 void Game::SetBackgroundColor()
@@ -306,6 +314,10 @@ void Game::DestroyResources()
 	//depth_stencil_view_->Release();
 	//depth_stencil_buffer_->Release();
 	for (auto c : components_)
+	{
+		c->DestroyResources();
+	}
+	for (const auto c : transparentComponents_)
 	{
 		c->DestroyResources();
 	}
@@ -382,6 +394,10 @@ void Game::Draw()
 	//lightVolumeComponent_->SetSize(100.0f); // Scale to range
 	//lightVolumeComponent_->SetPosition(DirectX::SimpleMath::Vector3(0.0f, 15.0f, 0.0f));
 	//lightVolumeComponent_->Draw();
+	for (const auto c : transparentComponents_)
+	{
+		c->Draw();
+	}
 
 }
 
@@ -395,6 +411,10 @@ void Game::EndFrame()
 void Game::Initialize()
 {
 	for (auto c : components_)
+	{
+		c->Initialize();
+	}
+	for (const auto c : transparentComponents_)
 	{
 		c->Initialize();
 	}
@@ -436,6 +456,10 @@ void Game::Update()
 
 	Camera->UpdateMatrix();
 	for (const auto c : components_)
+	{
+		c->Update();
+	}
+	for (const auto c : transparentComponents_)
 	{
 		c->Update();
 	}
@@ -581,3 +605,12 @@ void Game::PrepareResources()
 	lightVolumeComponent_->Initialize();
 }
 
+ID3D11RenderTargetView** Game::GetMainRTV()
+{
+	return &render_view_;
+}
+
+ID3D11DepthStencilView* Game::GetMainDSV()
+{
+	return depth_stencil_view_;
+}

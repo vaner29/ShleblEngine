@@ -5,9 +5,24 @@
 #include "../Components/RectangleComponent.h"
 #include "KatamariBall.h"
 #include "../Tools/DataProcesser.h"
+#include "../Particles/ParticleSystem.h"
 
 using namespace DirectX;
 using namespace SimpleMath;
+
+static float RandomFloatInRange(float low, float high)
+{
+    return (high - low) * static_cast<float>(rand()) / RAND_MAX + low;
+}
+
+static Vector4 RandomVectorInRange(Vector3 range)
+{
+    Vector4 res = Vector4::Zero;
+    res.x = RandomFloatInRange(-range.x, range.x);
+    res.y = RandomFloatInRange(-range.y, range.y);
+    res.z = RandomFloatInRange(-range.z, range.z);
+    return res;
+}
 
 KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraController(this)
 {
@@ -97,6 +112,67 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
     car->collision.Radius = 10.f;
     components_.push_back(car);
     furniture.push_back(car);
+
+    //cloudPartSys = new ParticleSystem(this);
+    //cloudPartSys->Width = 5.0f;
+    //cloudPartSys->Length = 5.0f;
+    //cloudPartSys->Height = 1.5f;
+    //cloudPartSys->Position = Vector3(0, 9, 0);
+    //cloudPartSys->EmitterSettings.Size0 = 1.5f;
+    //cloudPartSys->EmitterSettings.Size1 = 0.8f;
+    //cloudPartSys->GravityAffected = false;
+    //cloudPartSys->EmitterSettings.LifeTime = 5.0f;
+    //cloudPartSys->EmitterSettings.NudgeLifeTime = true;
+    //cloudPartSys->EmitterSettings.ParticlesPerSecond = 7;
+    //cloudPartSys->EmitterSettings.Color0 = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+    //cloudPartSys->EmitterSettings.NudgeColorLum = true;
+    //cloudPartSys->EmitterSettings.NudgeColorHue = false;
+    //cloudPartSys->EmitterSettings.NudgeVelocity = true;
+    //cloudPartSys->GroundLevel = -4;
+    //cloudPartSys->IsTextured = true;
+    //transparentComponents_.push_back(cloudPartSys);
+
+    rainPartSys = new ParticleSystem(this);
+    rainPartSys->Width = 400.5f;
+    rainPartSys->Length = 400.5f;
+    rainPartSys->Height = 30.0f;
+    rainPartSys->Position = Vector3(0, 30, 0);
+    rainPartSys->EmitterSettings.Size0 = 0.15f;
+    rainPartSys->EmitterSettings.Size1 = 0.15f;
+    rainPartSys->GravityAffected = true;
+    rainPartSys->EmitterSettings.LifeTime = 3.0f;
+    rainPartSys->EmitterSettings.NudgeLifeTime = true;
+    rainPartSys->EmitterSettings.ParticlesPerSecond = 1000;
+    rainPartSys->EmitterSettings.Color0 = Vector4(0.0f, 0.8f, 0.0f, 2.0f);
+    rainPartSys->EmitterSettings.NudgeColorLum = true;
+    rainPartSys->EmitterSettings.NudgeColorHue = true;
+    rainPartSys->EmitterSettings.NudgeVelocity = false;
+    rainPartSys->GroundLevel = -30;
+    rainPartSys->IsTextured = false;
+    transparentComponents_.push_back(rainPartSys);
+
+    cloudPartSys = new ParticleSystem(this);
+    cloudPartSys->Width = 1.5;
+    cloudPartSys->Length = 1.5f;
+    cloudPartSys->Height = 0.5f;
+    cloudPartSys->Position = Vector3(0, 30, 0);
+    /*cloudPartSys->EmitterSettings.Velocity = Vector3(RandomFloatInRange(-3.0f, 3.0f), RandomFloatInRange(15.0f, 25.0f), RandomFloatInRange(-3.0f, 3.0f));*/
+    cloudPartSys->EmitterSettings.DynamicVelocityX = Vector2(-3.0f, 3.0f);
+    cloudPartSys->EmitterSettings.DynamicVelocityY = Vector2(10.0f, 15.0f);
+    cloudPartSys->EmitterSettings.DynamicVelocityZ = Vector2(-3.0f, 3.0f);
+    cloudPartSys->EmitterSettings.Size0 = 0.15f;
+    cloudPartSys->EmitterSettings.Size1 = 0.15f;
+    cloudPartSys->GravityAffected = true;
+    cloudPartSys->EmitterSettings.LifeTime = 3.0f;
+    cloudPartSys->EmitterSettings.NudgeLifeTime = true;
+    cloudPartSys->EmitterSettings.ParticlesPerSecond = 200;
+    cloudPartSys->EmitterSettings.Color0 = Vector4(1.0f, 0.5f, 0.0f, 2.0f);
+    cloudPartSys->EmitterSettings.NudgeColorLum = true;
+    cloudPartSys->EmitterSettings.NudgeColorHue = true;
+    cloudPartSys->EmitterSettings.NudgeVelocity = false;
+    cloudPartSys->GroundLevel = -1;
+    transparentComponents_.push_back(cloudPartSys);
+
     cameraController.targetBall = ball;
 }
 
@@ -120,6 +196,8 @@ void KatamariGame::Update()
         SetSpotlightDir();
     if (dir.Length() > 0.0f)
         ball->SetDirection(dir);
+    cloudPartSys->Position = ball->GetPosition();
+    //rainPartSys->Position = furniture[0]->GetPosition() + Vector3(0, 8, 0);
 
     //std::cout << ball->GetPosition().x << " " << ball->GetPosition().y << " " << ball->GetPosition().z << " " << std::endl;
 

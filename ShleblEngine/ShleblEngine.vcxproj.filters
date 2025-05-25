@@ -96,11 +96,23 @@
     <ClCompile Include="Components\DirectionalLight.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Components\GBuffer.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Components\LightVolume.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\ParticleSystem.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MyVeryFirstShader.hlsl" />
     <FxCompile Include="Shaders\RectangleShader.hlsl" />
     <FxCompile Include="Shaders\ShadowShader.hlsl" />
+    <FxCompile Include="Shaders\Particles.hlsl" />
+    <FxCompile Include="Shaders\ParticlesSim.hlsl" />
+    <FxCompile Include="Shaders\ParticlesTex.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\Game.h">
@@ -197,6 +209,18 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Components\DirectionalLight.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\GBuffer.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\magic_enum.hpp">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\LightVolume.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\ParticleSystem.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

@@ -70,6 +70,8 @@ public:
 		DirectX::SimpleMath::Matrix ViewProj[5];
 		DirectX::SimpleMath::Vector4 Distance;
 	};
+	std::vector<GameComponent*> transparentComponents_{};
+
 	DirectionalLight dLight_;
 	LightVolume* lightVolumeComponent_;
 
@@ -132,6 +134,8 @@ public:
 	void Run();
 	ID3D11Buffer* const* GetCascadeCb() const;
 	DirectionalLight* GetDLight();
+	ID3D11RenderTargetView** GetMainRTV();
+	ID3D11DepthStencilView* GetMainDSV();
 
 
 
