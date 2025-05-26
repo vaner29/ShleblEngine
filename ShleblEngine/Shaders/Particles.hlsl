@@ -50,33 +50,33 @@ PS_IN VSMain(uint vertexID : SV_VertexID)
 
     uint corner = vertexID % 4;
 
-    float pSize = lerp(p.Size0Size1.x, p.Size0Size1.y, saturate(1.0f - p.LifeTime / p.MaxLifeTime));
+    //float pSize = lerp(p.Size0Size1.x, p.Size0Size1.y, saturate(1.0f - p.LifeTime / p.MaxLifeTime));
 
     [flatten]
     if (corner == 0)
     {
-        output.pos += float4(pSize, pSize, 0.0f, 0.0f);
+        output.pos += float4(p.Size0Size1.x, p.Size0Size1.y, 0.0f, 0.0f);
         output.tex = float2(1.0f, 1.0f);
     }
 
     [flatten]
     if (corner == 1)
     {
-        output.pos += float4(-pSize, -pSize, 0.0f, 0.0f);
+        output.pos += float4(-p.Size0Size1.x, -p.Size0Size1.y, 0.0f, 0.0f);
         output.tex = float2(0.0f, 0.0f);
     }
 
     [flatten]
     if (corner == 2)
     {
-        output.pos += float4(pSize, -pSize, 0.0f, 0.0f);
+        output.pos += float4(p.Size0Size1.x, -p.Size0Size1.y, 0.0f, 0.0f);
         output.tex = float2(0.0f, 1.0f);
     }
 
     [flatten]
     if (corner == 3)
     {
-        output.pos += float4(-pSize, pSize, 0.0f, 0.0f);
+        output.pos += float4(-p.Size0Size1.x, p.Size0Size1.y, 0.0f, 0.0f);
         output.tex = float2(1.0f, 0.0f);
     }
 

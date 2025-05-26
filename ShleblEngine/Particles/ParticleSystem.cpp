@@ -69,12 +69,9 @@ ParticleSystem::ParticleSystem(Game* g) : GameComponent(g)
     EmitterSettings.ParticlesPerSecond = 100.0f;
     EmitterSettings.Color0 = Vector4::One;
     EmitterSettings.Velocity = Vector3::Zero;
-    EmitterSettings.NudgeColorLum = true;
-    EmitterSettings.NudgeColorHue = false;
     EmitterSettings.Size0 = 0.05f;
     EmitterSettings.Size1 = 0.02f;
     EmitterSettings.LifeTime = 1.0f;
-    EmitterSettings.NudgeLifeTime = false;
     EmitterSettings.Offset = Vector3::Zero;
     EmitterSettings.DynamicVelocityX = Vector2::Zero;
     EmitterSettings.DynamicVelocityY = Vector2::Zero;
@@ -149,8 +146,8 @@ void ParticleSystem::Update()
         while (emitterTimeSave / (1.0f / EmitterSettings.ParticlesPerSecond) >= 1)
         {
             Particle p = {};
-            p.LifeTime = EmitterSettings.LifeTime + (EmitterSettings.NudgeLifeTime ? RandomFloatInRange(-0.5f, 0.5f) : 0.0f);
-            p.Velocity = Vector4(EmitterSettings.Velocity.x, EmitterSettings.Velocity.y, EmitterSettings.Velocity.z, 0.0f) + (EmitterSettings.NudgeVelocity ? RandomVectorInRange(Vector3(0.2f, 0.2f, 0.2f)) : Vector4::Zero);
+            p.LifeTime = EmitterSettings.LifeTime + RandomFloatInRange(-0.5f, 0.5f);
+            p.Velocity = Vector4(EmitterSettings.Velocity.x, EmitterSettings.Velocity.y, EmitterSettings.Velocity.z, 0.0f);
             if (EmitterSettings.DynamicVelocityX != Vector2::Zero) {
                 p.Velocity = Vector4(p.Velocity.x + RandomFloatInRange(EmitterSettings.DynamicVelocityX.x, EmitterSettings.DynamicVelocityX.y), p.Velocity.y, p.Velocity.z, p.Velocity.w);
             }
@@ -160,7 +157,7 @@ void ParticleSystem::Update()
             if (EmitterSettings.DynamicVelocityZ != Vector2::Zero) {
                 p.Velocity = Vector4(p.Velocity.x, p.Velocity.y, p.Velocity.z + RandomFloatInRange(EmitterSettings.DynamicVelocityZ.x, EmitterSettings.DynamicVelocityZ.y), p.Velocity.w);
             }
-            p.Color0 = (EmitterSettings.Color0 + (EmitterSettings.NudgeColorHue ? RandomVectorInRange(Vector3(0.05f, 0.05f, 0.05f)) : Vector4::Zero)) * (EmitterSettings.NudgeColorLum ? RandomFloatInRange(0.9f, 1.1f) : 1.0f);
+            p.Color0 = (EmitterSettings.Color0);
             p.Size0Size1 = Vector2(EmitterSettings.Size0, EmitterSettings.Size1);
             p.Position = Vector4(Length * RandomFloatInRange(-1.0f, 1.0f), Height * RandomFloatInRange(-1.0f, 1.0f), Width * RandomFloatInRange(-1.0f, 1.0f), 0.0f);
             p.Position.Normalize();

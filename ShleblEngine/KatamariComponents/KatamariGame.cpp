@@ -137,16 +137,12 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
     rainPartSys->Length = 400.5f;
     rainPartSys->Height = 30.0f;
     rainPartSys->Position = Vector3(0, 30, 0);
-    rainPartSys->EmitterSettings.Size0 = 0.15f;
-    rainPartSys->EmitterSettings.Size1 = 0.15f;
+    rainPartSys->EmitterSettings.Size0 = 0.075f;
+    rainPartSys->EmitterSettings.Size1 = 0.85f;
     rainPartSys->GravityAffected = true;
     rainPartSys->EmitterSettings.LifeTime = 3.0f;
-    rainPartSys->EmitterSettings.NudgeLifeTime = true;
     rainPartSys->EmitterSettings.ParticlesPerSecond = 1000;
     rainPartSys->EmitterSettings.Color0 = Vector4(0.0f, 0.8f, 0.0f, 2.0f);
-    rainPartSys->EmitterSettings.NudgeColorLum = true;
-    rainPartSys->EmitterSettings.NudgeColorHue = true;
-    rainPartSys->EmitterSettings.NudgeVelocity = false;
     rainPartSys->GroundLevel = -30;
     rainPartSys->IsTextured = false;
     transparentComponents_.push_back(rainPartSys);
@@ -164,12 +160,8 @@ KatamariGame::KatamariGame() : Game(L"Katamari Game", 800, 800), cameraControlle
     cloudPartSys->EmitterSettings.Size1 = 0.15f;
     cloudPartSys->GravityAffected = true;
     cloudPartSys->EmitterSettings.LifeTime = 3.0f;
-    cloudPartSys->EmitterSettings.NudgeLifeTime = true;
     cloudPartSys->EmitterSettings.ParticlesPerSecond = 200;
     cloudPartSys->EmitterSettings.Color0 = Vector4(1.0f, 0.5f, 0.0f, 2.0f);
-    cloudPartSys->EmitterSettings.NudgeColorLum = true;
-    cloudPartSys->EmitterSettings.NudgeColorHue = true;
-    cloudPartSys->EmitterSettings.NudgeVelocity = false;
     cloudPartSys->GroundLevel = -1;
     transparentComponents_.push_back(cloudPartSys);
 

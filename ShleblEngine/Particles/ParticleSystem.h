@@ -104,14 +104,11 @@ public:
         bool Enabled;
         float ParticlesPerSecond;
         DirectX::SimpleMath::Vector4 Color0;
-        bool NudgeColorLum;
-        bool NudgeColorHue;
         DirectX::SimpleMath::Vector3 Velocity;
-        bool NudgeVelocity;
         float Size0;
         float Size1;
         float LifeTime;
-        bool NudgeLifeTime;
+        bool isLong;
         DirectX::SimpleMath::Vector3 Offset;
         DirectX::SimpleMath::Vector2 DynamicVelocityX;
         DirectX::SimpleMath::Vector2 DynamicVelocityY;
