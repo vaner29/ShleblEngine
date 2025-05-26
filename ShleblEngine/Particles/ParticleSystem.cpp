@@ -8,6 +8,10 @@
 using namespace DirectX;
 using namespace SimpleMath;
 
+const UINT BITONIC_BLOCK_SIZE = 512;
+const UINT TRANSPOSE_BLOCK_SIZE = 16;
+const UINT MATRIX_WIDTH = BITONIC_BLOCK_SIZE;
+
 static D3D_SHADER_MACRO* GetMacros(const ParticleSystem::ComputeFlags& flag)
 {
     // Allocate array for up to 4 macros (3 flags + 1 null terminator)
@@ -71,6 +75,7 @@ ParticleSystem::ParticleSystem(Game* g) : GameComponent(g)
     EmitterSettings.Size1 = 0.02f;
     EmitterSettings.LifeTime = 1.0f;
     EmitterSettings.NudgeLifeTime = false;
+    EmitterSettings.Offset = Vector3::Zero;
     EmitterSettings.DynamicVelocityX = Vector2::Zero;
     EmitterSettings.DynamicVelocityY = Vector2::Zero;
     EmitterSettings.DynamicVelocityZ = Vector2::Zero;
@@ -145,7 +150,7 @@ void ParticleSystem::Update()
         {
             Particle p = {};
             p.LifeTime = EmitterSettings.LifeTime + (EmitterSettings.NudgeLifeTime ? RandomFloatInRange(-0.5f, 0.5f) : 0.0f);
-            p.Velocity = Vector4(EmitterSettings.Velocity.x, EmitterSettings.Velocity.y, EmitterSettings.Velocity.z, 0.0f) + (EmitterSettings.NudgeVelocity ? RandomVectorInRange(Vector3(0.05f, 0.05f, 0.05f)) : Vector4::Zero);
+            p.Velocity = Vector4(EmitterSettings.Velocity.x, EmitterSettings.Velocity.y, EmitterSettings.Velocity.z, 0.0f) + (EmitterSettings.NudgeVelocity ? RandomVectorInRange(Vector3(0.2f, 0.2f, 0.2f)) : Vector4::Zero);
             if (EmitterSettings.DynamicVelocityX != Vector2::Zero) {
                 p.Velocity = Vector4(p.Velocity.x + RandomFloatInRange(EmitterSettings.DynamicVelocityX.x, EmitterSettings.DynamicVelocityX.y), p.Velocity.y, p.Velocity.z, p.Velocity.w);
             }
@@ -163,6 +168,9 @@ void ParticleSystem::Update()
             p.Position.y *= RandomFloatInRange(0.0, Height / 2.0f);
             p.Position.z *= RandomFloatInRange(0.0, Length / 2.0f);
             p.Position.w = 1.0f;
+            p.Position.x += EmitterSettings.Offset.x;
+            p.Position.y += EmitterSettings.Offset.y;
+            p.Position.z += EmitterSettings.Offset.z;
             p.MaxLifeTime = p.LifeTime;
             AddParticle(p);
             emitterTimeSave -= 1.0f / EmitterSettings.ParticlesPerSecond;
@@ -176,6 +184,9 @@ void ParticleSystem::Update()
     constData.View = game->Camera->GetView();
     constData.Proj = game->Camera->GetProj();
     constData.DeltaTimeMaxParticlesGroupdimGround = Vector4(game->delta_time_, ParticlesCount, groupSizeY, GroundLevel);
+    constData.InvView = game->Camera->GetView().Invert();
+    constData.BoundingSphereInfo = Vector4(EmitterSettings.Offset) + Vector4(0.0f, -5.0f, 0.0f, 0.0f);
+    constData.BoundingSphereInfo.w = 1.0f;
 
     game->context_->UpdateSubresource(constBuf.Get(), 0, nullptr, &constData, 0, 0);
     game->context_->CSSetConstantBuffers(0, 1, constBuf.GetAddressOf());
@@ -185,6 +196,10 @@ void ParticleSystem::Update()
 
     game->context_->CSSetUnorderedAccessViews(0, 1, uavSrc.GetAddressOf(), &counterKeepValue);
     game->context_->CSSetUnorderedAccessViews(1, 1, uavDst.GetAddressOf(), &counterZero);
+    game->context_->CSSetUnorderedAccessViews(2, 1, uavSort.GetAddressOf(), nullptr);
+
+    game->context_->CSSetShaderResources(1, 1, game->GetDepthSRV());
+    game->context_->CSSetShaderResources(2, 1, game->GetNormalBuffer());
 
     if (GravityAffected)
     {
@@ -197,6 +212,7 @@ void ParticleSystem::Update()
     {
         game->context_->CSSetShader(ComputeShaders[ComputeFlags::SIMULATION].Get(), nullptr, 0);
     }
+    game->context_->CSSetSamplers(0, 1, samplerState.GetAddressOf());
 
     if (groupSizeX > 0)
     {
@@ -236,6 +252,8 @@ void ParticleSystem::Update()
     game->context_->Unmap(countBuf.Get(), 0);
 
     SwapBuffers();
+
+    Sort();
 }
 
 void ParticleSystem::Draw()
@@ -275,6 +293,7 @@ void ParticleSystem::Draw()
     game->context_->VSSetShader(vertexShader.Get(), nullptr, 0);
     game->context_->VSSetShaderResources(0, 1, srvSrc.GetAddressOf());
     game->context_->VSSetConstantBuffers(0, 1, constBuf.GetAddressOf());
+    game->context_->VSSetShaderResources(1, 1, srvSort.GetAddressOf());
     if (IsTextured)
     {
         game->context_->PSSetShader(pixelShaderTex.Get(), nullptr, 0);
@@ -294,6 +313,9 @@ void ParticleSystem::Draw()
     game->context_->RSSetState(oldRastState.Get());
     game->context_->OMSetBlendState(oldBlendState.Get(), oldBlendFactor, oldBlendMask);
     game->context_->OMSetDepthStencilState(oldDepthState.Get(), oldStencilRef);
+
+    ID3D11ShaderResourceView* pViewnullptr = nullptr;
+    game->context_->VSSetShaderResources(1, 1, &pViewnullptr);
 }
 
 void ParticleSystem::DestroyResources()
@@ -375,6 +397,34 @@ void ParticleSystem::LoadShaders()
 
         ComputeShaders.emplace(flag, computeShader);
     }
+
+    Microsoft::WRL::ComPtr<ID3DBlob> sortBC;
+    res = D3DCompileFromFile(L"./Shaders/SortShader.hlsl",
+        nullptr,
+        nullptr,
+        "BitonicSort",
+        "cs_5_0",
+        D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+        0,
+        sortBC.GetAddressOf(),
+        errorCode.GetAddressOf());
+
+    game->device_->CreateComputeShader(sortBC.Get()->GetBufferPointer(),
+        sortBC.Get()->GetBufferSize(), nullptr, SortShader.GetAddressOf());
+
+    Microsoft::WRL::ComPtr<ID3DBlob> transposeBC;
+    res = D3DCompileFromFile(L"./Shaders/SortShader.hlsl",
+        nullptr,
+        nullptr,
+        "BitonicSort",
+        "cs_5_0",
+        D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+        0,
+        transposeBC.GetAddressOf(),
+        errorCode.GetAddressOf());
+
+    game->device_->CreateComputeShader(transposeBC.Get()->GetBufferPointer(),
+        transposeBC.Get()->GetBufferSize(), nullptr, TransposeShader.GetAddressOf());
 }
 
 void ParticleSystem::CreateBuffers()
@@ -387,6 +437,15 @@ void ParticleSystem::CreateBuffers()
     constBufDesc.ByteWidth = sizeof(ConstData);
 
     game->device_->CreateBuffer(&constBufDesc, nullptr, constBuf.GetAddressOf());
+
+    D3D11_BUFFER_DESC constSortBufDesc = {};
+    constSortBufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    constSortBufDesc.Usage = D3D11_USAGE_DEFAULT;
+    constSortBufDesc.MiscFlags = 0;
+    constSortBufDesc.CPUAccessFlags = 0;
+    constSortBufDesc.ByteWidth = sizeof(CBSort);
+
+    game->device_->CreateBuffer(&constSortBufDesc, nullptr, constSortBuf.GetAddressOf());
 
     D3D11_BUFFER_DESC particleBufDesc = {};
     particleBufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
@@ -419,6 +478,40 @@ void ParticleSystem::CreateBuffers()
     uavSrc = uavFirst;
     srvDst = srvSecond;
     uavDst = uavSecond;
+
+    D3D11_BUFFER_DESC particleDepthBufDesc = {};
+    particleDepthBufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+    particleDepthBufDesc.Usage = D3D11_USAGE_DEFAULT;
+    particleDepthBufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    particleDepthBufDesc.CPUAccessFlags = 0;
+    particleDepthBufDesc.StructureByteStride = sizeof(ParticleDepths);
+    particleDepthBufDesc.ByteWidth = MaxParticlesCount * sizeof(ParticleDepths);
+
+    ParticleDepths* depthsData = new ParticleDepths[MaxParticlesCount];
+    for (UINT i = 0; i < MaxParticlesCount; ++i)
+    {
+        depthsData[i] = { i, 0.0f };
+    }
+
+    D3D11_SUBRESOURCE_DATA initSortData = {};
+    initSortData.pSysMem = depthsData;
+    initSortData.SysMemPitch = 0;
+    initSortData.SysMemSlicePitch = 0;
+
+    game->device_->CreateBuffer(&particleDepthBufDesc, &initSortData, sortBuffer.GetAddressOf());
+
+    game->device_->CreateShaderResourceView(sortBuffer.Get(), nullptr, srvSort.GetAddressOf());
+
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uavDepthDesc = {};
+    uavDepthDesc.Format = DXGI_FORMAT_UNKNOWN;
+    uavDepthDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    uavDepthDesc.Buffer = D3D11_BUFFER_UAV{
+        0,
+        MaxParticlesCount,
+        0
+    };
+
+    game->device_->CreateUnorderedAccessView(sortBuffer.Get(), &uavDepthDesc, uavSort.GetAddressOf());
 
     ID3D11UnorderedAccessView* nuPtr = nullptr;
     game->context_->CSSetUnorderedAccessViews(0, 1, uavSrc.GetAddressOf(), &MaxParticlesCount);
@@ -517,4 +610,64 @@ void ParticleSystem::SwapBuffers()
 
     srvDst = tmpSrv;
     uavDst = tmpUav;
+}
+
+
+//--------------------------------------------------------------------------------------
+// Helper to set the compute shader constants
+//--------------------------------------------------------------------------------------
+void ParticleSystem::SetConstants(UINT iLevel, UINT iLevelMask, UINT iWidth, UINT iHeight)
+{
+    CBSort cb = { iLevel, iLevelMask, iWidth, iHeight };
+    game->context_->UpdateSubresource(constSortBuf.Get(), 0, nullptr, &cb, 0, 0);
+    game->context_->CSSetConstantBuffers(0, 1, constSortBuf.GetAddressOf());
+}
+//--------------------------------------------------------------------------------------
+// GPU Bitonic Sort
+//--------------------------------------------------------------------------------------
+void ParticleSystem::Sort()
+{
+    const UINT MATRIX_HEIGHT = MaxParticlesCount / BITONIC_BLOCK_SIZE;
+
+    // Sort the data
+    // First sort the rows for the levels <= to the block size
+    for (UINT level = 2; level <= BITONIC_BLOCK_SIZE; level = level * 2)
+    {
+        SetConstants(level, level, MATRIX_HEIGHT, MATRIX_WIDTH);
+
+        // Sort the row data
+        game->context_->CSSetUnorderedAccessViews(0, 1, uavSort.GetAddressOf(), nullptr);
+        game->context_->CSSetShader(SortShader.Get(), nullptr, 0);
+        game->context_->Dispatch(MaxParticlesCount / BITONIC_BLOCK_SIZE, 1, 1);
+    }
+
+    // Then sort the rows and columns for the levels > than the block size
+    // Transpose. Sort the Columns. Transpose. Sort the Rows.
+    for (UINT level = (BITONIC_BLOCK_SIZE * 2); level <= MaxParticlesCount; level = level * 2)
+    {
+        SetConstants((level / BITONIC_BLOCK_SIZE), (level & ~MaxParticlesCount) / BITONIC_BLOCK_SIZE, MATRIX_WIDTH, MATRIX_HEIGHT);
+
+        // Transpose the data from buffer 1 into buffer 2
+        game->context_->CSSetUnorderedAccessViews(0, 1, uavSort.GetAddressOf(), nullptr);
+        game->context_->CSSetShader(TransposeShader.Get(), nullptr, 0);
+        game->context_->Dispatch(MATRIX_WIDTH / TRANSPOSE_BLOCK_SIZE, MATRIX_HEIGHT / TRANSPOSE_BLOCK_SIZE, 1);
+
+        // Sort the transposed column data
+        game->context_->CSSetShader(SortShader.Get(), nullptr, 0);
+        game->context_->Dispatch(MaxParticlesCount / BITONIC_BLOCK_SIZE, 1, 1);
+
+        SetConstants(BITONIC_BLOCK_SIZE, level, MATRIX_HEIGHT, MATRIX_WIDTH);
+
+        // Transpose the data from buffer 2 back into buffer 1
+        game->context_->CSSetUnorderedAccessViews(0, 1, uavSort.GetAddressOf(), nullptr);
+        game->context_->CSSetShader(TransposeShader.Get(), nullptr, 0);
+        game->context_->Dispatch(MATRIX_HEIGHT / TRANSPOSE_BLOCK_SIZE, MATRIX_WIDTH / TRANSPOSE_BLOCK_SIZE, 1);
+
+        // Sort the row data
+        game->context_->CSSetShader(SortShader.Get(), nullptr, 0);
+        game->context_->Dispatch(MaxParticlesCount / BITONIC_BLOCK_SIZE, 1, 1);
+
+        ID3D11UnorderedAccessView* pViewnullptr = nullptr;
+        game->context_->CSSetUnorderedAccessViews(0, 1, &pViewnullptr, nullptr);
+    }
 }

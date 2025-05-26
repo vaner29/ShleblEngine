@@ -87,25 +87,98 @@ LRESULT CALLBACK Game::WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM l
 	}
 }
 
-void Game::CreateDepthStencilBuffer()
+static DXGI_FORMAT GetDepthResourceFormat(DXGI_FORMAT depthformat)
 {
-	D3D11_TEXTURE2D_DESC depthStencilDesc;
+	DXGI_FORMAT resformat;
+	switch (depthformat)
+	{
+	case DXGI_FORMAT::DXGI_FORMAT_D16_UNORM:
+		resformat = DXGI_FORMAT::DXGI_FORMAT_R16_TYPELESS;
+		break;
+	case DXGI_FORMAT::DXGI_FORMAT_D24_UNORM_S8_UINT:
+		resformat = DXGI_FORMAT::DXGI_FORMAT_R24G8_TYPELESS;
+		break;
+	case DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT:
+		resformat = DXGI_FORMAT::DXGI_FORMAT_R32_TYPELESS;
+		break;
+	case DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+		resformat = DXGI_FORMAT::DXGI_FORMAT_R32G8X24_TYPELESS;
+		break;
+	}
+
+	return resformat;
+}
+
+static DXGI_FORMAT GetDepthSRVFormat(DXGI_FORMAT depthformat)
+{
+	DXGI_FORMAT srvformat;
+	switch (depthformat)
+	{
+	case DXGI_FORMAT::DXGI_FORMAT_D16_UNORM:
+		srvformat = DXGI_FORMAT::DXGI_FORMAT_R16_FLOAT;
+		break;
+	case DXGI_FORMAT::DXGI_FORMAT_D24_UNORM_S8_UINT:
+		srvformat = DXGI_FORMAT::DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+		break;
+	case DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT:
+		srvformat = DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT;
+		break;
+	case DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+		srvformat = DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+		break;
+	}
+	return srvformat;
+}
+
+void Game::CreateDepthStencilBuffer(DXGI_FORMAT format)
+{
+	D3D11_TEXTURE2D_DESC depthStencilDesc = {};
+
+	DXGI_FORMAT resformat = GetDepthResourceFormat(format);
+	DXGI_FORMAT srvformat = GetDepthSRVFormat(format);
 
 	depthStencilDesc.Width = display_->client_width_;
 	depthStencilDesc.Height = display_->client_height_;
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.ArraySize = 1;
-	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilDesc.Format = resformat;
 	depthStencilDesc.SampleDesc.Count = 1;
 	depthStencilDesc.SampleDesc.Quality = 0;
 	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 	depthStencilDesc.CPUAccessFlags = 0;
 	depthStencilDesc.MiscFlags = 0;
 
 	HRESULT res = device_->CreateTexture2D(&depthStencilDesc, nullptr, &depth_stencil_buffer_);
 
-	res = device_->CreateDepthStencilView(depth_stencil_buffer_, nullptr, &depth_stencil_view_);
+	if (FAILED(res))
+	{
+		OutputDebugString(TEXT("Fatal error: Failed to create depth stencil buffer!\n"));
+	}
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC ddesc = {};
+	ddesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	ddesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	ddesc.Texture2D.MipSlice = 0;
+
+	res = device_->CreateDepthStencilView(depth_stencil_buffer_, &ddesc, &depth_stencil_view_);
+
+	if (FAILED(res))
+	{
+		OutputDebugString(TEXT("Fatal error: Failed to create depth stencil view!\n"));
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvd = {};
+	srvd.Format = srvformat;
+	srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvd.Texture2D.MipLevels = 1;
+
+	res = device_->CreateShaderResourceView(depth_stencil_buffer_, &srvd, &depthSrv_);
+
+	if (FAILED(res))
+	{
+		OutputDebugString(TEXT("Failed to create DepthStencil Shader View"));
+	}
 }
 
 void Game::CreateCsmDepthTextureArray()
@@ -521,7 +594,7 @@ void Game::PrepareResources()
 
 	CreateBackBuffer();
 
-	CreateDepthStencilBuffer();
+	CreateDepthStencilBuffer(DXGI_FORMAT_D24_UNORM_S8_UINT);
 
 	CreateCsmDepthTextureArray();
 
@@ -613,4 +686,14 @@ ID3D11RenderTargetView** Game::GetMainRTV()
 ID3D11DepthStencilView* Game::GetMainDSV()
 {
 	return depth_stencil_view_;
+}
+
+ID3D11ShaderResourceView** Game::GetDepthSRV()
+{
+	return &depthSrv_;
+}
+
+ID3D11ShaderResourceView** Game::GetNormalBuffer()
+{
+	return gBuffer_.normalSrv_.GetAddressOf();
 }

@@ -10,6 +10,12 @@ struct Particle
     float MaxLifeTime;
 };
 
+struct ParticleDepths
+{
+    uint Index;
+    float Depth;
+};
+
 struct PS_IN
 {
     float4 pos : SV_POSITION;
@@ -23,17 +29,20 @@ cbuffer CB1 : register(b0)
     float4x4 gView;
     float4x4 gProj;
     float4 gDeltaTimeMaxParticlesGroupdim;
+    float4x4 gInvProj;
+    float4 BoundingSphereInfo;
 };
 
 StructuredBuffer<Particle> renderBufSrc : register(t0);
-ConsumeStructuredBuffer<Particle> particlesBufSrc : register(u0);
-AppendStructuredBuffer<Particle> particlesBufDst : register(u1);
+StructuredBuffer<ParticleDepths> sortedBufSrc : register(t1);
 
 PS_IN VSMain(uint vertexID : SV_VertexID)
 {
     PS_IN output = (PS_IN) 0;
+
+    uint index = sortedBufSrc[vertexID / 4].Index;
 	
-    Particle p = renderBufSrc[vertexID / 4];
+    Particle p = renderBufSrc[index];
     output.pos = mul(p.Position, gWorld);
     output.pos = mul(output.pos, gView);
     output.color = p.Color0;

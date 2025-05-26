@@ -113,6 +113,7 @@
     <FxCompile Include="Shaders\Particles.hlsl" />
     <FxCompile Include="Shaders\ParticlesSim.hlsl" />
     <FxCompile Include="Shaders\ParticlesTex.hlsl" />
+    <FxCompile Include="Shaders\SortShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\Game.h">

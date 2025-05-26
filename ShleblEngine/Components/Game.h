@@ -30,7 +30,7 @@ class Game
 private:
 	bool isExitRequested;
 	void CreateBackBuffer();
-	void CreateDepthStencilBuffer();
+	void CreateDepthStencilBuffer(DXGI_FORMAT depthformat);
 	void InitTimer();
 	void UpdateTimer();
 	void CreateCsmDepthTextureArray();
@@ -114,6 +114,7 @@ public:
 	ID3D11Texture2D* shadowTexArr_;
 	ID3D11DepthStencilView* depthShadowDsv_;
 	ID3D11ShaderResourceView* depthShadowSrv_;
+	ID3D11ShaderResourceView* depthSrv_;
 
 	DirectX::SimpleMath::Vector4 spotLightPos = DirectX::SimpleMath::Vector4(0.0f, 0.0f, 100.0f, 1.0f);
 	DirectX::SimpleMath::Vector4 spotLightDir = DirectX::SimpleMath::Vector4(0.0f, 0.0f, -1.0f, 0.0f);
@@ -136,6 +137,8 @@ public:
 	DirectionalLight* GetDLight();
 	ID3D11RenderTargetView** GetMainRTV();
 	ID3D11DepthStencilView* GetMainDSV();
+	ID3D11ShaderResourceView** GetDepthSRV();
+	ID3D11ShaderResourceView** GetNormalBuffer();
 
 
 

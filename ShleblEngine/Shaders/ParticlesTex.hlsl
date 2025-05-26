@@ -14,5 +14,5 @@ float4 PSMain(PS_IN input) : SV_Target
 {
     float4 objColor = DiffuseMap.SampleLevel(Sampler, input.tex.xy, 0);
 
-    return objColor;
+    return objColor * 0.9f;
 }
