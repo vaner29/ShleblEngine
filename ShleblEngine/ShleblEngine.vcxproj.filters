@@ -251,5 +251,7 @@
     <Image Include="Textures\car.dds" />
     <Image Include="C:\Users\glebm\Downloads\square-shape-illustration-graphic-vector.dds" />
     <Image Include="Textures\square.dds" />
+    <Image Include="Textures\smoke.dds" />
+    <Image Include="Textures\fish.dds" />
   </ItemGroup>
 </Project>

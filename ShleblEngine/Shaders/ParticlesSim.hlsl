@@ -93,8 +93,8 @@ void CSMain(
         float2 texcoords = mul(tmpNdc, T).rg;
 
         float readDepth = DepthMap.SampleLevel(DepthSampler, texcoords, 0).r;
-
-        /*[flatten]
+        
+        [flatten]
         if (abs(tmpNdc.z - readDepth) <= 0.005f)
         {
             float3 norm = NormalMap.SampleLevel(DepthSampler, texcoords, 0).rgb;
@@ -102,16 +102,8 @@ void CSMain(
             norm = normalize(norm);
             p.Velocity.xyz = reflect(p.Velocity.xyz, norm) / 2.0f;
             p.Position.xyz += p.Velocity.xyz * gDeltaTimeMaxParticlesGroupdim.x;
-        }*/
-
-        /*[flatten]
-        if (length(p.Position.xyz - BoundingSphereInfo.xyz) <= BoundingSphereInfo.w)
-        {
-            float3 norm = normalize(p.Position.xyz - BoundingSphereInfo.xyz);
-            p.Velocity.xyz = reflect(p.Velocity.xyz, norm) / 2.0f;
-            p.Position.xyz += p.Velocity.xyz * gDeltaTimeMaxParticlesGroupdim.x;
-        }*/
-
+        }
+        
         particlesBufDst.Append(p);
     }
 #endif
